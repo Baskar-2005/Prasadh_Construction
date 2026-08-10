@@ -6,7 +6,8 @@ export interface Project {
   area: string;
   completionYear: string;
   constructionType: string;
-  image: string;
+  image: string; // Cover image
+  images?: string[]; // Multiple photos / gallery images
   blueprintImage?: string;
   description: string;
   highlights: string[];

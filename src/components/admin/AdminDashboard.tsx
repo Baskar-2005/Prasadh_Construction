@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   LayoutDashboard,
@@ -31,20 +31,34 @@ import {
   Layers,
   FileText,
   Calculator,
-  UserCheck
+  UserCheck,
+  MessageSquare,
+  Users,
+  CheckCircle2,
+  Clock,
+  Send,
+  AlertCircle,
+  Tag,
+  ArrowRight,
+  ArrowUp,
+  ArrowDown,
+  Camera,
+  Images
 } from 'lucide-react';
-import { useCMS, ServiceItemWithVisibility } from '../../context/CMSContext';
+import { useCMS, ServiceItemWithVisibility, ClientLead } from '../../context/CMSContext';
 import { Project, Testimonial, FAQItem } from '../../types';
+import prasadhLogoEmblem from '../../assets/images/prasadh_logo_emblem_1786205642641.jpg';
 
 interface AdminDashboardProps {
   onClose: () => void;
 }
 
-type TabType = 'overview' | 'projects' | 'services' | 'pricing' | 'testimonials' | 'faqs' | 'settings' | 'backup';
+type TabType = 'overview' | 'leads' | 'projects' | 'services' | 'pricing' | 'testimonials' | 'faqs' | 'settings' | 'backup';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const cms = useCMS();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [globalSearch, setGlobalSearch] = useState('');
 
   // Modal states for CRUD operations
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -59,157 +73,272 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [editingFAQ, setEditingFAQ] = useState<FAQItem | null>(null);
   const [isAddingFAQ, setIsAddingFAQ] = useState(false);
 
+  const [isAddingLead, setIsAddingLead] = useState(false);
+
   const [pinChangeInput, setPinChangeInput] = useState('');
   const [jsonImportText, setJsonImportText] = useState('');
 
-  // Handle Image Upload to Base64 helper
+  // Handle Image Upload with Canvas compression to lightweight Base64
   const handleImageUpload = (file: File, callback: (base64Str: string) => void) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      if (reader.result) {
-        callback(reader.result.toString());
-      }
+      if (!reader.result) return;
+      const rawDataUrl = reader.result.toString();
+      
+      const img = new Image();
+      img.src = rawDataUrl;
+      img.onload = () => {
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.75);
+          callback(compressed);
+        } else {
+          callback(rawDataUrl);
+        }
+      };
+      img.onerror = () => {
+        callback(rawDataUrl);
+      };
     };
     reader.readAsDataURL(file);
   };
 
+  // Logout handler returning directly to the website
+  const handleLogout = () => {
+    cms.logoutAdmin();
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-[110] bg-slate-900 text-slate-100 flex flex-col font-sans overflow-hidden">
-      {/* TOP ADMIN HEADER BAR */}
-      <header className="bg-slate-950 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
+    <div className="fixed inset-0 z-[110] bg-slate-100 text-slate-900 flex flex-col font-sans overflow-hidden">
+      {/* TOP ADMIN HEADER BAR - LIGHT THEMED */}
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0 shadow-2xs z-10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-amber-500 flex items-center justify-center font-bold text-white shadow-md">
-            PC
+          {/* Real Company Emblem Logo */}
+          <div className="relative group">
+            <img
+              src={prasadhLogoEmblem}
+              alt="Prasadh Construction Logo"
+              className="w-10 h-10 rounded-xl object-cover border border-amber-400/60 shadow-xs ring-2 ring-amber-400/20"
+            />
+            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" title="CMS Connected Live" />
           </div>
+
           <div>
-            <h1 className="text-sm sm:text-base font-extrabold font-display text-white flex items-center gap-2">
+            <h1 className="text-sm sm:text-base font-extrabold font-display text-slate-900 flex items-center gap-2">
               Prasadh Construction Admin CMS
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono uppercase tracking-wider">
-                Live Dynamic Mode
+              <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-mono font-bold uppercase tracking-wider hidden sm:inline-flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                Live Dynamic
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400">
-              Manage website content, portfolio, pricing, and services instantly
+            <p className="text-[11px] text-slate-500 hidden sm:block">
+              Manage website content, portfolio, client leads, and pricing instantly
             </p>
           </div>
         </div>
 
+        {/* Header Actions & Global Search */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={onClose}
-            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Preview Website</span>
-          </button>
+          {/* Global Search input */}
+          <div className="relative hidden md:block w-52 lg:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search CMS..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:border-amber-500 focus:bg-white transition-all"
+            />
+            {globalSearch && (
+              <button
+                onClick={() => setGlobalSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
 
           <button
-            onClick={cms.logoutAdmin}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs font-semibold flex items-center gap-1 cursor-pointer"
-            title="Log Out Admin"
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            title="Preview live website"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-600" />
+            <span className="hidden sm:inline">Preview Website</span>
+          </button>
+
+          {/* Logout Button -> Returns directly to website */}
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Log out and return to website"
+          >
+            <LogOut className="w-3.5 h-3.5 text-rose-600" />
+            <span>Logout</span>
           </button>
         </div>
       </header>
 
       {/* MAIN LAYOUT WITH SIDEBAR + CONTENT AREA */}
       <div className="flex-1 flex overflow-hidden">
-        {/* SIDEBAR NAVIGATION */}
-        <aside className="w-16 sm:w-64 bg-slate-950 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto">
-          <nav className="p-2 sm:p-4 space-y-1">
+        {/* EXECUTIVE SIDEBAR NAVIGATION - Crisp Dark Slate */}
+        <aside className="w-16 sm:w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto text-slate-300">
+          <div className="p-3 border-b border-slate-800/80 hidden sm:flex items-center gap-2.5">
+            <img src={prasadhLogoEmblem} alt="Logo" className="w-7 h-7 rounded-lg object-cover" />
+            <div>
+              <p className="text-xs font-bold text-white leading-tight">Admin Console</p>
+              <p className="text-[10px] text-amber-400 font-medium">Er. V. Prasadh M.E.</p>
+            </div>
+          </div>
+
+          <nav className="p-2 sm:p-3 space-y-1">
             <SidebarButton
-              icon={<LayoutDashboard className="w-5 h-5" />}
+              icon={<LayoutDashboard className="w-4 h-4" />}
               label="Overview"
               active={activeTab === 'overview'}
               onClick={() => setActiveTab('overview')}
             />
             <SidebarButton
-              icon={<Building className="w-5 h-5" />}
+              icon={<Users className="w-4 h-4" />}
+              label={`Client Leads (${cms.leads?.length || 0})`}
+              badge={cms.leads?.filter((l) => l.status === 'New').length ? `${cms.leads.filter((l) => l.status === 'New').length} New` : undefined}
+              active={activeTab === 'leads'}
+              onClick={() => setActiveTab('leads')}
+            />
+            <SidebarButton
+              icon={<Building className="w-4 h-4" />}
               label={`Projects (${cms.projects.length})`}
               active={activeTab === 'projects'}
               onClick={() => setActiveTab('projects')}
             />
             <SidebarButton
-              icon={<Briefcase className="w-5 h-5" />}
+              icon={<Briefcase className="w-4 h-4" />}
               label={`Services (${cms.services.length})`}
               active={activeTab === 'services'}
               onClick={() => setActiveTab('services')}
             />
             <SidebarButton
-              icon={<DollarSign className="w-5 h-5" />}
+              icon={<DollarSign className="w-4 h-4" />}
               label="Pricing & Estimator"
               active={activeTab === 'pricing'}
               onClick={() => setActiveTab('pricing')}
             />
             <SidebarButton
-              icon={<Star className="w-5 h-5" />}
+              icon={<Star className="w-4 h-4" />}
               label={`Reviews (${cms.testimonials.length})`}
               active={activeTab === 'testimonials'}
               onClick={() => setActiveTab('testimonials')}
             />
             <SidebarButton
-              icon={<HelpCircle className="w-5 h-5" />}
+              icon={<HelpCircle className="w-4 h-4" />}
               label={`FAQs (${cms.faqs.length})`}
               active={activeTab === 'faqs'}
               onClick={() => setActiveTab('faqs')}
             />
             <SidebarButton
-              icon={<Settings className="w-5 h-5" />}
+              icon={<Settings className="w-4 h-4" />}
               label="Site Settings"
               active={activeTab === 'settings'}
               onClick={() => setActiveTab('settings')}
             />
             <SidebarButton
-              icon={<Database className="w-5 h-5" />}
+              icon={<Database className="w-4 h-4" />}
               label="Backup & Restore"
               active={activeTab === 'backup'}
               onClick={() => setActiveTab('backup')}
             />
           </nav>
 
-          <div className="mt-auto p-4 border-t border-slate-800/80 hidden sm:block text-[11px] text-slate-500">
-            <p className="font-semibold text-slate-400">Er. V. Prasadh M.E.</p>
-            <p>Virudhachalam, Tamil Nadu</p>
-            <p className="mt-1 text-[10px] text-slate-600">Storage: localStorage Sync</p>
+          <div className="mt-auto p-4 border-t border-slate-800 hidden sm:block text-[11px] text-slate-400">
+            <p className="font-semibold text-slate-200">{cms.companyInfo.name}</p>
+            <p className="text-slate-400 truncate">Virudhachalam, Tamil Nadu</p>
+            <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-1 rounded-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Auto Sync: Saved locally</span>
+            </div>
           </div>
         </aside>
 
-        {/* MAIN DYNAMIC CONTENT DISPLAY */}
-        <main className="flex-1 bg-slate-900 overflow-y-auto p-4 sm:p-8 text-slate-200">
-          {activeTab === 'overview' && <OverviewTab cms={cms} onNavigate={(tab) => setActiveTab(tab)} />}
+        {/* MAIN DYNAMIC CONTENT DISPLAY - LIGHT CANVAS */}
+        <main className="flex-1 bg-slate-50 overflow-y-auto p-4 sm:p-8 text-slate-800">
+          {activeTab === 'overview' && (
+            <OverviewTab
+              cms={cms}
+              onNavigate={(tab) => setActiveTab(tab)}
+              onAddLead={() => setIsAddingLead(true)}
+              onAddProject={() => setIsAddingProject(true)}
+            />
+          )}
+
+          {activeTab === 'leads' && (
+            <LeadsTab
+              cms={cms}
+              globalSearch={globalSearch}
+              onAddLead={() => setIsAddingLead(true)}
+            />
+          )}
+
           {activeTab === 'projects' && (
             <ProjectsTab
               cms={cms}
+              globalSearch={globalSearch}
               onAddProject={() => setIsAddingProject(true)}
               onEditProject={(p) => setEditingProject(p)}
               handleImageUpload={handleImageUpload}
             />
           )}
+
           {activeTab === 'services' && (
             <ServicesTab
               cms={cms}
+              globalSearch={globalSearch}
               onAddService={() => setIsAddingService(true)}
               onEditService={(s) => setEditingService(s)}
             />
           )}
+
           {activeTab === 'pricing' && <PricingTab cms={cms} />}
+
           {activeTab === 'testimonials' && (
             <TestimonialsTab
               cms={cms}
+              globalSearch={globalSearch}
               onAddTestimonial={() => setIsAddingTestimonial(true)}
               onEditTestimonial={(t) => setEditingTestimonial(t)}
               handleImageUpload={handleImageUpload}
             />
           )}
+
           {activeTab === 'faqs' && (
             <FAQsTab
               cms={cms}
+              globalSearch={globalSearch}
               onAddFAQ={() => setIsAddingFAQ(true)}
               onEditFAQ={(f) => setEditingFAQ(f)}
             />
           )}
+
           {activeTab === 'settings' && (
             <SettingsTab
               cms={cms}
@@ -217,6 +346,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               setPinChangeInput={setPinChangeInput}
             />
           )}
+
           {activeTab === 'backup' && (
             <BackupTab
               cms={cms}
@@ -229,7 +359,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
       {/* MODALS FOR ADD / EDIT */}
 
-      {/* 1. PROJECT FORM MODAL */}
+      {/* 1. LEAD ADD MODAL */}
+      {isAddingLead && (
+        <LeadFormModal
+          onClose={() => setIsAddingLead(false)}
+          onSave={(data) => {
+            cms.addLead(data);
+            setIsAddingLead(false);
+          }}
+        />
+      )}
+
+      {/* 2. PROJECT FORM MODAL */}
       {(isAddingProject || editingProject) && (
         <ProjectFormModal
           project={editingProject}
@@ -250,7 +391,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         />
       )}
 
-      {/* 2. SERVICE FORM MODAL */}
+      {/* 3. SERVICE FORM MODAL */}
       {(isAddingService || editingService) && (
         <ServiceFormModal
           service={editingService}
@@ -270,7 +411,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         />
       )}
 
-      {/* 3. TESTIMONIAL FORM MODAL */}
+      {/* 4. TESTIMONIAL FORM MODAL */}
       {(isAddingTestimonial || editingTestimonial) && (
         <TestimonialFormModal
           testimonial={editingTestimonial}
@@ -291,7 +432,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         />
       )}
 
-      {/* 4. FAQ FORM MODAL */}
+      {/* 5. FAQ FORM MODAL */}
       {(isAddingFAQ || editingFAQ) && (
         <FAQFormModal
           faq={editingFAQ}
@@ -314,186 +455,320 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   );
 };
 
-// HELPER SIDEBAR BUTTON
+// ==========================================
+// SIDEBAR BUTTON COMPONENT
+// ==========================================
 const SidebarButton: React.FC<{
   icon: React.ReactNode;
   label: string;
   active: boolean;
+  badge?: string;
   onClick: () => void;
-}> = ({ icon, label, active, onClick }) => (
+}> = ({ icon, label, active, badge, onClick }) => (
   <button
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all font-semibold text-xs cursor-pointer ${
       active
-        ? 'bg-[#1E3A8A] text-white shadow-lg border border-blue-400/30 font-bold'
-        : 'text-slate-400 hover:text-white hover:bg-slate-900'
+        ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30 shadow-2xs font-bold'
+        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
     }`}
   >
-    <div className={active ? 'text-amber-300' : 'text-slate-400'}>{icon}</div>
-    <span className="hidden sm:inline truncate">{label}</span>
+    <div className="flex items-center gap-2.5 truncate">
+      <span className={active ? 'text-amber-400' : 'text-slate-400'}>{icon}</span>
+      <span className="hidden sm:inline truncate">{label}</span>
+    </div>
+    {badge && (
+      <span className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-500 text-slate-950">
+        {badge}
+      </span>
+    )}
   </button>
 );
 
-/* =========================================================================
-   TAB 1: OVERVIEW
-   ========================================================================= */
-const OverviewTab: React.FC<{ cms: ReturnType<typeof useCMS>; onNavigate: (tab: TabType) => void }> = ({ cms, onNavigate }) => {
-  const hiddenServices = cms.services.filter((s) => s.hidden).length;
-  const activeServices = cms.services.length - hiddenServices;
+// ==========================================
+// 1. OVERVIEW TAB
+// ==========================================
+const OverviewTab: React.FC<{
+  cms: ReturnType<typeof useCMS>;
+  onNavigate: (tab: TabType) => void;
+  onAddLead: () => void;
+  onAddProject: () => void;
+}> = ({ cms, onNavigate, onAddLead, onAddProject }) => {
+  const newLeadsCount = cms.leads?.filter((l) => l.status === 'New').length || 0;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold font-display text-white">Dashboard Overview</h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Welcome to the Prasadh Construction Content Management System.
-        </p>
-      </div>
-
-      {/* STATS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-slate-800/90 border border-slate-700/80 shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Projects</span>
-            <Building className="w-5 h-5 text-blue-400" />
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-blue-950 rounded-2xl p-6 text-white shadow-sm border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img
+            src={prasadhLogoEmblem}
+            alt="Emblem"
+            className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400/40 shadow-md shrink-0"
+          />
+          <div>
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest">
+              Virudhachalam Civil & Structural Engineering Portal
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black font-display text-white">
+              Welcome back, Er. V. Prasadh
+            </h2>
+            <p className="text-xs text-slate-300 mt-1">
+              Control your live portfolio, rates, client consultation leads, and site information in real-time.
+            </p>
           </div>
-          <p className="text-3xl font-extrabold font-display text-white mt-2">{cms.projects.length}</p>
-          <button
-            onClick={() => onNavigate('projects')}
-            className="mt-3 text-[11px] text-blue-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-          >
-            Manage Portfolio &rarr;
-          </button>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-800/90 border border-slate-700/80 shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Services</span>
-            <Briefcase className="w-5 h-5 text-amber-400" />
-          </div>
-          <p className="text-3xl font-extrabold font-display text-white mt-2">
-            {activeServices} <span className="text-xs font-normal text-slate-400">({hiddenServices} hidden)</span>
-          </p>
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => onNavigate('services')}
-            className="mt-3 text-[11px] text-amber-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+            onClick={onAddLead}
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
           >
-            Manage Services &rarr;
+            <Plus className="w-4 h-4" />
+            <span>Log Client Lead</span>
           </button>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-800/90 border border-slate-700/80 shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Client Reviews</span>
-            <Star className="w-5 h-5 text-amber-300" />
-          </div>
-          <p className="text-3xl font-extrabold font-display text-white mt-2">{cms.testimonials.length}</p>
-          <button
-            onClick={() => onNavigate('testimonials')}
-            className="mt-3 text-[11px] text-amber-300 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-          >
-            Manage Testimonials &rarr;
-          </button>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-800/90 border border-slate-700/80 shadow-md">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pricing Package</span>
-            <DollarSign className="w-5 h-5 text-emerald-400" />
-          </div>
-          <p className="text-2xl font-extrabold font-display text-white mt-2">
-            ₹{cms.estimatorRates.standardRate} - ₹{cms.estimatorRates.sovereignRate}
-          </p>
-          <button
-            onClick={() => onNavigate('pricing')}
-            className="mt-3 text-[11px] text-emerald-400 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-          >
-            Configure Estimator Rates &rarr;
-          </button>
-        </div>
-      </div>
-
-      {/* QUICK SITE DETAILS SUMMARY */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-6 rounded-3xl bg-slate-800/80 border border-slate-700/80 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Phone className="w-4 h-4 text-blue-400" />
-            Live Contact & Business Details
-          </h3>
-
-          <div className="space-y-2 text-xs text-slate-300">
-            <div className="flex justify-between py-1 border-b border-slate-700/50">
-              <span className="text-slate-400">Company Name:</span>
-              <span className="font-semibold text-white">{cms.companyInfo.name}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-700/50">
-              <span className="text-slate-400">Founder & Engineer:</span>
-              <span className="font-semibold text-white">{cms.companyInfo.founder}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-700/50">
-              <span className="text-slate-400">Primary Phone:</span>
-              <span className="font-semibold text-emerald-400">{cms.companyInfo.phone}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-700/50">
-              <span className="text-slate-400">WhatsApp:</span>
-              <span className="font-semibold text-emerald-400">+{cms.companyInfo.whatsapp}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-700/50">
-              <span className="text-slate-400">Office Address:</span>
-              <span className="font-semibold text-white text-right max-w-xs">{cms.companyInfo.address}</span>
-            </div>
-          </div>
-
           <button
             onClick={() => onNavigate('settings')}
-            className="w-full py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-all text-center block cursor-pointer"
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            Edit Contact Details & Address
+            <Settings className="w-3.5 h-3.5" />
+            <span>Site Info</span>
           </button>
         </div>
+      </div>
 
-        <div className="p-6 rounded-3xl bg-slate-800/80 border border-slate-700/80 space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            Quick Admin Actions
-          </h3>
+      {/* METRIC CARDS GRID - LIGHT CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 1: Leads */}
+        <div
+          onClick={() => onNavigate('leads')}
+          className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Client Inquiries</span>
+            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+              <Users className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900">{cms.leads?.length || 0}</span>
+            {newLeadsCount > 0 && (
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                {newLeadsCount} New
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-blue-600 font-semibold mt-2 flex items-center gap-1">
+            Manage Leads <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          </p>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3">
+        {/* Metric 2: Projects */}
+        <div
+          onClick={() => onNavigate('projects')}
+          className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Portfolio Projects</span>
+            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-slate-950 transition-all">
+              <Building className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900">{cms.projects.length}</span>
+          <p className="text-xs text-amber-700 font-semibold mt-2 flex items-center gap-1">
+            View Projects <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          </p>
+        </div>
+
+        {/* Metric 3: Services */}
+        <div
+          onClick={() => onNavigate('services')}
+          className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Services Offered</span>
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+              <Briefcase className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900">{cms.services.length}</span>
+            <span className="text-xs text-slate-500">({cms.services.filter((s) => s.hidden).length} hidden)</span>
+          </div>
+          <p className="text-xs text-emerald-700 font-semibold mt-2 flex items-center gap-1">
+            Manage Services <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          </p>
+        </div>
+
+        {/* Metric 4: Pricing */}
+        <div
+          onClick={() => onNavigate('pricing')}
+          className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs hover:shadow-md transition-all cursor-pointer group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sq.Ft Package Rates</span>
+            <div className="p-2.5 rounded-xl bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all">
+              <Calculator className="w-5 h-5" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-slate-900">
+            ₹{cms.estimatorRates.standardRate} - ₹{cms.estimatorRates.sovereignRate}
+          </span>
+          <p className="text-xs text-violet-700 font-semibold mt-2 flex items-center gap-1">
+            Configure Estimator <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          </p>
+        </div>
+      </div>
+
+      {/* TWO COLUMN CONTENT: RECENT LEADS + QUICK ACTIONS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* RECENT CLIENT LEADS TABLE */}
+        <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Users className="w-4 h-4 text-amber-500" />
+                Recent Client Consultations & Leads
+              </h3>
+              <p className="text-xs text-slate-500">Inquiries submitted for Virudhachalam & surrounding sites</p>
+            </div>
             <button
-              onClick={() => onNavigate('projects')}
-              className="p-4 rounded-2xl bg-blue-900/40 hover:bg-blue-900/60 border border-blue-500/30 text-left transition-all cursor-pointer group"
+              onClick={() => onNavigate('leads')}
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
             >
-              <Plus className="w-5 h-5 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
-              <p className="text-xs font-bold text-white">Add New Project</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Upload specs & photos</p>
+              View All ({cms.leads?.length || 0}) →
             </button>
+          </div>
 
+          {cms.leads && cms.leads.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="py-2 px-3">Client</th>
+                    <th className="py-2 px-3">Requested Service</th>
+                    <th className="py-2 px-3">Location</th>
+                    <th className="py-2 px-3">Status</th>
+                    <th className="py-2 px-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {cms.leads.slice(0, 4).map((lead) => (
+                    <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-3 font-bold text-slate-900">
+                        {lead.name}
+                        <p className="text-[10px] text-slate-400 font-mono font-normal">{lead.phone}</p>
+                      </td>
+                      <td className="py-3 px-3 text-slate-700 max-w-[180px] truncate">{lead.serviceRequested}</td>
+                      <td className="py-3 px-3 text-slate-500">{lead.location}</td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            lead.status === 'New'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : lead.status === 'Contacted'
+                              ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                              : lead.status === 'Converted'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {lead.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <a
+                          href={`https://wa.me/${cms.companyInfo.whatsapp}?text=${encodeURIComponent(
+                            `Hello ${lead.name}, regarding your construction inquiry for ${lead.serviceRequested} in ${lead.location}...`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Send className="w-3 h-3" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 text-center py-6">No client leads recorded yet.</p>
+          )}
+        </div>
+
+        {/* QUICK ADMIN ACTIONS PANEL */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
+          <div className="pb-3 border-b border-slate-100">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              Quick Content Tools
+            </h3>
+            <p className="text-xs text-slate-500">Shortcut actions for site updates</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5">
             <button
-              onClick={() => onNavigate('testimonials')}
-              className="p-4 rounded-2xl bg-amber-900/40 hover:bg-amber-900/60 border border-amber-500/30 text-left transition-all cursor-pointer group"
+              onClick={onAddProject}
+              className="w-full p-3 bg-slate-50 hover:bg-blue-50/80 border border-slate-200 hover:border-blue-200 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer"
             >
-              <Star className="w-5 h-5 text-amber-400 mb-2 group-hover:scale-110 transition-transform" />
-              <p className="text-xs font-bold text-white">Add Client Review</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Publish Google review</p>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
+                  <Plus className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-blue-700">Add New Project</p>
+                  <p className="text-[10px] text-slate-500">Upload photos & 3D specs</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </button>
 
             <button
               onClick={() => onNavigate('pricing')}
-              className="p-4 rounded-2xl bg-emerald-900/40 hover:bg-emerald-900/60 border border-emerald-500/30 text-left transition-all cursor-pointer group"
+              className="w-full p-3 bg-slate-50 hover:bg-amber-50/80 border border-slate-200 hover:border-amber-200 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer"
             >
-              <Calculator className="w-5 h-5 text-emerald-400 mb-2 group-hover:scale-110 transition-transform" />
-              <p className="text-xs font-bold text-white">Edit Sq.Ft Pricing</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Update rate packages</p>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100 text-amber-800">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-amber-800">Edit Estimator Rates</p>
+                  <p className="text-[10px] text-slate-500">Standard, Premium & Sovereign</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </button>
 
             <button
-              onClick={() => onNavigate('backup')}
-              className="p-4 rounded-2xl bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/30 text-left transition-all cursor-pointer group"
+              onClick={() => cms.exportDataJSON()}
+              className="w-full p-3 bg-slate-50 hover:bg-emerald-50/80 border border-slate-200 hover:border-emerald-200 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer"
             >
-              <Download className="w-5 h-5 text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-              <p className="text-xs font-bold text-white">Download Backup</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Export site JSON</p>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-800">Download Site Backup</p>
+                  <p className="text-[10px] text-slate-500">Export full site JSON state</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
             </button>
+          </div>
+
+          {/* Quick Business Contact View */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+            <p className="font-bold text-slate-900 flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-amber-600" />
+              {cms.companyInfo.phone}
+            </p>
+            <p className="text-slate-600 text-[11px] flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              {cms.companyInfo.address}
+            </p>
           </div>
         </div>
       </div>
@@ -501,214 +776,402 @@ const OverviewTab: React.FC<{ cms: ReturnType<typeof useCMS>; onNavigate: (tab: 
   );
 };
 
-/* =========================================================================
-   TAB 2: PROJECTS PORTFOLIO MANAGER
-   ========================================================================= */
-const ProjectsTab: React.FC<{
+// ==========================================
+// 2. CLIENT LEADS TAB
+// ==========================================
+const LeadsTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
-  onAddProject: () => void;
-  onEditProject: (p: Project) => void;
-  handleImageUpload: (file: File, callback: (str: string) => void) => void;
-}> = ({ cms, onAddProject, onEditProject }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  globalSearch: string;
+  onAddLead: () => void;
+}> = ({ cms, globalSearch, onAddLead }) => {
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  const filteredProjects = cms.projects.filter((p) => {
-    const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.location.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredLeads = useMemo(() => {
+    let list = cms.leads || [];
+    if (filterStatus !== 'all') {
+      list = list.filter((l) => l.status === filterStatus);
+    }
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter(
+        (l) =>
+          l.name.toLowerCase().includes(q) ||
+          l.phone.includes(q) ||
+          l.location.toLowerCase().includes(q) ||
+          l.serviceRequested.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [cms.leads, filterStatus, globalSearch]);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h2 className="text-2xl font-bold font-display text-white">Projects Portfolio Manager</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Add, edit, or remove completed construction projects from the showcase.
-          </p>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <Users className="w-5 h-5 text-amber-500" />
+            Client Consultations & Leads Management
+          </h2>
+          <p className="text-xs text-slate-500">Track and follow up on client inquiries, site visit requests, and project BOQs</p>
+        </div>
+
+        <button
+          onClick={onAddLead}
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Log New Lead</span>
+        </button>
+      </div>
+
+      {/* FILTER TABS */}
+      <div className="flex flex-wrap items-center gap-2">
+        {['all', 'New', 'Contacted', 'Site Visited', 'Converted', 'Closed'].map((st) => (
+          <button
+            key={st}
+            onClick={() => setFilterStatus(st)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              filterStatus === st
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            {st === 'all' ? 'All Inquiries' : st}
+          </button>
+        ))}
+      </div>
+
+      {/* LEADS LIST / TABLE */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
+        {filteredLeads.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  <th className="py-3 px-4">Client Name & Phone</th>
+                  <th className="py-3 px-4">Requested Service</th>
+                  <th className="py-3 px-4">Location</th>
+                  <th className="py-3 px-4">Est. Budget</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
+                {filteredLeads.map((lead) => (
+                  <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      {lead.name}
+                      <p className="text-[11px] text-blue-600 font-mono font-normal">
+                        <a href={`tel:${lead.phone}`}>{lead.phone}</a>
+                      </p>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium max-w-xs">{lead.serviceRequested}</td>
+                    <td className="py-3.5 px-4 text-slate-600">{lead.location}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-900">{lead.estimatedBudget || 'N/A'}</td>
+                    <td className="py-3.5 px-4 text-slate-500 text-[11px]">{lead.date}</td>
+                    <td className="py-3.5 px-4">
+                      <select
+                        value={lead.status}
+                        onChange={(e) => cms.updateLeadStatus(lead.id, e.target.value as any)}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-hidden focus:border-amber-500 cursor-pointer"
+                      >
+                        <option value="New">New</option>
+                        <option value="Contacted">Contacted</option>
+                        <option value="Site Visited">Site Visited</option>
+                        <option value="Estimate Sent">Estimate Sent</option>
+                        <option value="Converted">Converted</option>
+                        <option value="Closed">Closed</option>
+                      </select>
+                    </td>
+                    <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
+                      <a
+                        href={`https://wa.me/${cms.companyInfo.whatsapp}?text=${encodeURIComponent(
+                          `Hello ${lead.name}, Er. V. Prasadh here from Prasadh Construction. Regarding your request for ${lead.serviceRequested}...`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center text-xs font-bold gap-1 cursor-pointer"
+                        title="Chat on WhatsApp"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span className="hidden md:inline">WhatsApp</span>
+                      </a>
+
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Delete lead entry for ${lead.name}?`)) {
+                            cms.deleteLead(lead.id);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 inline-flex items-center text-xs cursor-pointer"
+                        title="Delete Lead"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-8 text-center text-slate-400">
+            <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm font-semibold text-slate-600">No client leads matching criteria.</p>
+            <p className="text-xs text-slate-400 mt-1">Click "Log New Lead" to record phone calls or site visitors.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 3. PROJECTS TAB
+// ==========================================
+const ProjectsTab: React.FC<{
+  cms: ReturnType<typeof useCMS>;
+  globalSearch: string;
+  onAddProject: () => void;
+  onEditProject: (p: Project) => void;
+  handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
+}> = ({ cms, globalSearch, onAddProject, onEditProject }) => {
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const filteredProjects = useMemo(() => {
+    let list = cms.projects;
+    if (categoryFilter !== 'all') {
+      list = list.filter((p) => p.category === categoryFilter);
+    }
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.location.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [cms.projects, categoryFilter, globalSearch]);
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <Building className="w-5 h-5 text-amber-500" />
+            Portfolio Projects Showcase ({cms.projects.length})
+          </h2>
+          <p className="text-xs text-slate-500">Manage completed residential homes, villas, commercial & structural designs</p>
         </div>
 
         <button
           onClick={onAddProject}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg cursor-pointer"
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Project</span>
         </button>
       </div>
 
-      {/* FILTER & SEARCH */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search projects by title or location..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">All Categories</option>
-          <option value="villas">Luxury Villas</option>
-          <option value="commercial">Commercial</option>
-          <option value="structural">Structural Engg</option>
-          <option value="interiors">Interiors</option>
-          <option value="renovation">Renovation</option>
-        </select>
+      {/* CATEGORY FILTERS */}
+      <div className="flex flex-wrap items-center gap-2">
+        {['all', 'villas', 'commercial', 'structural', 'interiors', 'renovation'].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategoryFilter(cat)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              categoryFilter === cat
+                ? 'bg-slate-900 text-white shadow-2xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
       {/* PROJECTS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredProjects.map((p) => (
-          <div
-            key={p.id}
-            className="bg-slate-800/90 rounded-2xl overflow-hidden border border-slate-700/80 flex flex-col justify-between shadow-md group hover:border-blue-500/50 transition-all"
-          >
-            <div>
-              <div className="relative h-44 bg-slate-950 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filteredProjects.map((p) => {
+          const photoCount = p.images && p.images.length > 0 ? p.images.length : 1;
+          return (
+            <div
+              key={p.id}
+              className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col group"
+            >
+              <div className="relative h-48 bg-slate-100 overflow-hidden">
                 <img
                   src={p.image}
                   alt={p.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 bg-slate-950/80 text-amber-300 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-slate-900/80 text-amber-400 text-[10px] font-extrabold uppercase tracking-wider backdrop-blur-md">
                   {p.category}
+                </span>
+                <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-white/90 text-slate-900 text-[10px] font-bold">
+                  {p.completionYear}
+                </span>
+                <span className="absolute bottom-3 left-3 px-2 py-1 rounded-md bg-black/80 text-white text-[10px] font-bold flex items-center gap-1 backdrop-blur-xs">
+                  <Camera className="w-3 h-3 text-amber-400" />
+                  <span>{photoCount} Photos</span>
                 </span>
               </div>
 
-              <div className="p-4 space-y-2">
-                <p className="text-[11px] font-semibold text-blue-400 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  <span>{p.location}</span>
+            <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm line-clamp-1">{p.title}</h3>
+                <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                  <MapPin className="w-3 h-3 text-amber-500 shrink-0" />
+                  {p.location} • {p.area}
                 </p>
-                <h3 className="text-sm font-bold text-white leading-snug line-clamp-1">{p.title}</h3>
-                <p className="text-xs text-slate-400 line-clamp-2">{p.description}</p>
-                <div className="text-[11px] text-slate-500 flex justify-between pt-2 border-t border-slate-700/50">
-                  <span>Area: {p.area}</span>
-                  <span>Year: {p.completionYear}</span>
+                <p className="text-xs text-slate-600 mt-2 line-clamp-2">{p.description}</p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500">Type: {p.constructionType}</span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onEditProject(p)}
+                    className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-semibold cursor-pointer flex items-center gap-1"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete project "${p.title}"?`)) {
+                        cms.deleteProject(p.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs cursor-pointer"
+                    title="Delete Project"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
-
-            <div className="p-3 bg-slate-900/60 border-t border-slate-700/80 flex items-center justify-between gap-2">
-              <button
-                onClick={() => onEditProject(p)}
-                className="flex-1 py-1.5 px-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-blue-400" />
-                <span>Edit</span>
-              </button>
-
-              <button
-                onClick={() => cms.deleteProject(p.id)}
-                className="py-1.5 px-3 bg-red-950/60 hover:bg-red-900/80 text-red-400 rounded-lg text-xs font-semibold border border-red-800/50 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Delete Project"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
           </div>
-        ))}
+        );
+      })}
       </div>
     </div>
   );
 };
 
-/* =========================================================================
-   TAB 3: SERVICES & SPECS MANAGER
-   ========================================================================= */
+// ==========================================
+// 4. SERVICES TAB
+// ==========================================
 const ServicesTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
+  globalSearch: string;
   onAddService: () => void;
   onEditService: (s: ServiceItemWithVisibility) => void;
-}> = ({ cms, onAddService, onEditService }) => {
+}> = ({ cms, globalSearch, onAddService, onEditService }) => {
+  const filteredServices = useMemo(() => {
+    let list = cms.services;
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter((s) => s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
+    }
+    return list;
+  }, [cms.services, globalSearch]);
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h2 className="text-2xl font-bold font-display text-white">Services & Specs Manager</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Edit service offerings, deliverables, or toggle visibility on the live site.
-          </p>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-amber-500" />
+            Engineering Services Offerings ({cms.services.length})
+          </h2>
+          <p className="text-xs text-slate-500">Configure core services, deliverables, and toggle visibility on website</p>
         </div>
 
         <button
           onClick={onAddService}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg cursor-pointer"
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Custom Service</span>
+          <span>Add New Service</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cms.services.map((s) => (
+        {filteredServices.map((serv) => (
           <div
-            key={s.id}
-            className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
-              s.hidden
-                ? 'bg-slate-900/80 border-slate-800 text-slate-500 opacity-60'
-                : 'bg-slate-800/90 border-slate-700 text-slate-200'
+            key={serv.id}
+            className={`bg-white border rounded-2xl p-5 shadow-2xs transition-all flex flex-col justify-between ${
+              serv.hidden ? 'opacity-60 border-dashed border-slate-300' : 'border-slate-200/90'
             }`}
           >
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-900/50 text-blue-300 border border-blue-700/50">
-                  Icon: {s.iconName}
-                </span>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm shrink-0">
+                    {serv.title.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">{serv.title}</h3>
+                    <span className="text-[10px] text-slate-400 font-mono">Icon: {serv.iconName}</span>
+                  </div>
+                </div>
 
-                <button
-                  onClick={() => cms.toggleServiceVisibility(s.id)}
-                  className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                    s.hidden
-                      ? 'bg-red-950 text-red-400 border border-red-800/60'
-                      : 'bg-emerald-950 text-emerald-400 border border-emerald-800/60'
-                  }`}
-                >
-                  {s.hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  <span>{s.hidden ? 'Hidden' : 'Visible'}</span>
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => cms.toggleServiceVisibility(serv.id)}
+                    className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1 cursor-pointer ${
+                      serv.hidden
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                    }`}
+                    title={serv.hidden ? 'Click to Publish on Site' : 'Click to Hide from Site'}
+                  >
+                    {serv.hidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <span>{serv.hidden ? 'Hidden' : 'Visible'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => onEditService(serv)}
+                    className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 cursor-pointer"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Delete service "${serv.title}"?`)) {
+                        cms.deleteService(serv.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
-              <h3 className="text-base font-bold text-white mb-1">{s.title}</h3>
-              <p className="text-xs text-slate-400 line-clamp-2 mb-3">{s.description}</p>
+              <p className="text-xs text-slate-600 mt-3">{serv.description}</p>
 
-              <div className="p-3 bg-slate-950/50 rounded-xl space-y-1 mb-4 border border-slate-800">
-                <p className="text-[10px] uppercase font-bold text-slate-400">Key Deliverables:</p>
-                <ul className="text-xs text-slate-300 list-disc list-inside space-y-0.5">
-                  {s.deliverables.slice(0, 3).map((deliv, idx) => (
-                    <li key={idx} className="truncate">{deliv}</li>
-                  ))}
-                </ul>
-              </div>
+              {serv.deliverables && serv.deliverables.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-[11px] font-bold text-slate-500 mb-1">Key Deliverables:</p>
+                  <ul className="text-xs text-slate-700 space-y-0.5 list-disc pl-4">
+                    {serv.deliverables.slice(0, 3).map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-700/60">
-              <button
-                onClick={() => onEditService(s)}
-                className="py-1.5 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-blue-400" />
-                <span>Edit Specs</span>
-              </button>
-
-              <button
-                onClick={() => cms.deleteService(s.id)}
-                className="py-1.5 px-3 bg-red-950/60 hover:bg-red-900/80 text-red-400 rounded-lg text-xs font-semibold border border-red-800/50 cursor-pointer"
-                title="Delete Service"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+            <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
+              Ideal for: <span className="text-slate-800 font-semibold">{serv.idealFor}</span>
             </div>
           </div>
         ))}
@@ -717,260 +1180,218 @@ const ServicesTab: React.FC<{
   );
 };
 
-/* =========================================================================
-   TAB 4: PRICING & COST ESTIMATOR CONFIGURATOR
-   ========================================================================= */
+// ==========================================
+// 5. PRICING & ESTIMATOR TAB
+// ==========================================
 const PricingTab: React.FC<{ cms: ReturnType<typeof useCMS> }> = ({ cms }) => {
   const [rates, setRates] = useState(cms.estimatorRates);
 
-  const handleSave = () => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     cms.updateEstimatorRates(rates);
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold font-display text-white">Live Cost Estimator Configurator</h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Adjust package pricing per sq.ft and add-on rates for the website calculator.
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+          <Calculator className="w-5 h-5 text-amber-500" />
+          Construction Cost Estimator Package Rates (Per Sq.Ft)
+        </h2>
+        <p className="text-xs text-slate-500">
+          Updates reflect live on the website Cost Calculator tool immediately
         </p>
       </div>
 
-      {/* RATES FORM */}
-      <div className="bg-slate-800/90 p-6 rounded-3xl border border-slate-700 space-y-6">
-        <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider flex items-center gap-2">
-          <Calculator className="w-4 h-4" />
-          Construction Package Rates (₹ / Sq. Ft.)
-        </h3>
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* PACKAGE BASE RATES */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
+            Package Base Rates (₹ / Sq.Ft)
+          </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Standard Package Rate</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-slate-400 text-xs">₹</span>
-              <input
-                type="number"
-                value={rates.standardRate}
-                onChange={(e) => setRates({ ...rates, standardRate: Number(e.target.value) })}
-                className="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Standard Package Rate</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                <input
+                  type="number"
+                  value={rates.standardRate}
+                  onChange={(e) => setRates({ ...rates, standardRate: Number(e.target.value) })}
+                  className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+                  required
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">G+1 Basic specification</p>
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Standard finishes & PPC cement</p>
-          </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Popular / Premium Package</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-slate-400 text-xs">₹</span>
-              <input
-                type="number"
-                value={rates.premiumRate}
-                onChange={(e) => setRates({ ...rates, premiumRate: Number(e.target.value) })}
-                className="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white"
-              />
+            <div>
+              <label className="block text-xs font-bold text-amber-800 mb-1">Premium Package Rate (Popular)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 font-bold text-xs">₹</span>
+                <input
+                  type="number"
+                  value={rates.premiumRate}
+                  onChange={(e) => setRates({ ...rates, premiumRate: Number(e.target.value) })}
+                  className="w-full pl-7 pr-3 py-2 bg-amber-50/50 border border-amber-300 rounded-xl text-xs font-bold text-amber-950 focus:bg-white focus:border-amber-500"
+                  required
+                />
+              </div>
+              <p className="text-[10px] text-amber-700 mt-1">Teak doors, 3D elevation, branded steel</p>
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Teak joinery & UltraTech matrix</p>
-          </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Sovereign / Ultra-Luxury</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-slate-400 text-xs">₹</span>
-              <input
-                type="number"
-                value={rates.sovereignRate}
-                onChange={(e) => setRates({ ...rates, sovereignRate: Number(e.target.value) })}
-                className="w-full pl-7 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white"
-              />
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Sovereign Luxury Rate</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                <input
+                  type="number"
+                  value={rates.sovereignRate}
+                  onChange={(e) => setRates({ ...rates, sovereignRate: Number(e.target.value) })}
+                  className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+                  required
+                />
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">Italian marble finish & smart home</p>
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Bespoke luxury & automation</p>
           </div>
         </div>
 
-        <h3 className="text-sm font-bold text-blue-300 uppercase tracking-wider pt-4 border-t border-slate-700 flex items-center gap-2">
-          <DollarSign className="w-4 h-4" />
-          Add-On Engineering & Approval Fees
-        </h3>
+        {/* ADDON & CONSULTANCY FEES */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
+            Add-on Design & Approval Fees
+          </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">3D Structural Analysis Fee (Fixed ₹)</label>
-            <input
-              type="number"
-              value={rates.structAddon}
-              onChange={(e) => setRates({ ...rates, structAddon: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white"
-            />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Structural Design Flat Fee (₹)</label>
+              <input
+                type="number"
+                value={rates.structAddon}
+                onChange={(e) => setRates({ ...rates, structAddon: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">DTCP / Govt Approval Fee (Fixed ₹)</label>
-            <input
-              type="number"
-              value={rates.approvalAddon}
-              onChange={(e) => setRates({ ...rates, approvalAddon: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white"
-            />
-          </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Interior Design (₹ / Sq.Ft)</label>
+              <input
+                type="number"
+                value={rates.interiorAddonPerSqFt}
+                onChange={(e) => setRates({ ...rates, interiorAddonPerSqFt: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Interior Woodwork Rate (₹ / Sq.Ft)</label>
-            <input
-              type="number"
-              value={rates.interiorAddonPerSqFt}
-              onChange={(e) => setRates({ ...rates, interiorAddonPerSqFt: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold text-white"
-            />
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Municipal Plan Approval (₹)</label>
+              <input
+                type="number"
+                value={rates.approvalAddon}
+                onChange={(e) => setRates({ ...rates, approvalAddon: Number(e.target.value) })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+              />
+            </div>
           </div>
         </div>
 
         <button
-          onClick={handleSave}
-          className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          type="submit"
+          className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
           <Save className="w-4 h-4" />
-          <span>Save Live Estimator Pricing</span>
+          <span>Save Estimator Rates</span>
         </button>
-      </div>
+      </form>
     </div>
   );
 };
 
-/* =========================================================================
-   TAB 5: TESTIMONIALS & REVIEWS MANAGER
-   ========================================================================= */
+// ==========================================
+// 6. TESTIMONIALS & REVIEWS TAB
+// ==========================================
 const TestimonialsTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
+  globalSearch: string;
   onAddTestimonial: () => void;
   onEditTestimonial: (t: Testimonial) => void;
-  handleImageUpload: (file: File, callback: (str: string) => void) => void;
-}> = ({ cms, onAddTestimonial, onEditTestimonial }) => {
+  handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
+}> = ({ cms, globalSearch, onAddTestimonial, onEditTestimonial }) => {
+  const filtered = useMemo(() => {
+    let list = cms.testimonials;
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter((t) => t.clientName.toLowerCase().includes(q) || t.comment.toLowerCase().includes(q));
+    }
+    return list;
+  }, [cms.testimonials, globalSearch]);
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div>
-          <h2 className="text-2xl font-bold font-display text-white">Testimonials & Reviews Manager</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Manage verified client reviews and ratings shown in the Google-style testimonials section.
-          </p>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+            Client Reviews & Google Rating ({cms.testimonials.length})
+          </h2>
+          <p className="text-xs text-slate-500">Manage client testimonials published on the landing page</p>
         </div>
 
         <button
           onClick={onAddTestimonial}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg cursor-pointer"
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Add Client Review</span>
+          <span>Add Review</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {cms.testimonials.map((t) => (
-          <div key={t.id} className="p-5 rounded-2xl bg-slate-800/90 border border-slate-700 flex flex-col justify-between">
-            <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {filtered.map((test) => (
+          <div key={test.id} className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={t.avatar}
-                    alt={t.clientName}
-                    className="w-10 h-10 rounded-full object-cover border border-slate-600"
-                    referrerPolicy="no-referrer"
-                  />
+                <div className="flex items-center gap-2">
+                  <img src={test.avatar} alt={test.clientName} className="w-8 h-8 rounded-full object-cover border border-amber-300" />
                   <div>
-                    <h3 className="text-sm font-bold text-white">{t.clientName}</h3>
-                    <p className="text-[11px] text-slate-400">{t.location}</p>
+                    <h3 className="font-bold text-slate-900 text-xs">{test.clientName}</h3>
+                    <p className="text-[10px] text-slate-400">{test.location}</p>
                   </div>
                 </div>
 
-                <div className="flex text-amber-400">
-                  {Array.from({ length: t.rating }).map((_, idx) => (
-                    <Star key={idx} className="w-3.5 h-3.5 fill-amber-400" />
-                  ))}
+                <div className="flex items-center gap-1 text-amber-500">
+                  <Star className="w-3.5 h-3.5 fill-amber-500" />
+                  <span className="text-xs font-bold text-slate-900">{test.rating}.0</span>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-300 italic line-clamp-3">"{t.comment}"</p>
-              <p className="text-[10px] text-blue-400 font-medium">Project: {t.projectType}</p>
+              <p className="text-xs text-slate-600 mt-3 italic">"{test.comment}"</p>
             </div>
 
-            <div className="flex items-center justify-between pt-3 mt-4 border-t border-slate-700/60">
-              <button
-                onClick={() => onEditTestimonial(t)}
-                className="py-1.5 px-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-blue-400" />
-                <span>Edit</span>
-              </button>
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400">{test.projectType}</span>
 
-              <button
-                onClick={() => cms.deleteTestimonial(t.id)}
-                className="py-1.5 px-3 bg-red-950/60 hover:bg-red-900/80 text-red-400 rounded-lg text-xs font-semibold border border-red-800/50 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* =========================================================================
-   TAB 6: FAQS MANAGER
-   ========================================================================= */
-const FAQsTab: React.FC<{
-  cms: ReturnType<typeof useCMS>;
-  onAddFAQ: () => void;
-  onEditFAQ: (f: FAQItem) => void;
-}> = ({ cms, onAddFAQ, onEditFAQ }) => {
-  return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold font-display text-white">FAQs Manager</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Add or edit frequently asked questions and responses.
-          </p>
-        </div>
-
-        <button
-          onClick={onAddFAQ}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New FAQ</span>
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {cms.faqs.map((f) => (
-          <div key={f.id} className="p-4 rounded-2xl bg-slate-800/90 border border-slate-700 space-y-2">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="px-2 py-0.5 rounded-full bg-blue-900/50 text-blue-300 text-[10px] font-bold uppercase tracking-wider">
-                  Category: {f.category}
-                </span>
-                <h3 className="text-sm font-bold text-white mt-1.5">{f.question}</h3>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1">
                 <button
-                  onClick={() => onEditFAQ(f)}
-                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs cursor-pointer"
+                  onClick={() => onEditTestimonial(test)}
+                  className="p-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => cms.deleteFAQ(f.id)}
-                  className="p-1.5 bg-red-950/60 hover:bg-red-900/80 text-red-400 rounded-lg text-xs cursor-pointer"
+                  onClick={() => {
+                    if (window.confirm(`Delete review from ${test.clientName}?`)) {
+                      cms.deleteTestimonial(test.id);
+                    }
+                  }}
+                  className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">{f.answer}</p>
           </div>
         ))}
       </div>
@@ -978,148 +1399,219 @@ const FAQsTab: React.FC<{
   );
 };
 
-/* =========================================================================
-   TAB 7: SITE SETTINGS & CONTACT DETAILS
-   ========================================================================= */
+// ==========================================
+// 7. FAQS TAB
+// ==========================================
+const FAQsTab: React.FC<{
+  cms: ReturnType<typeof useCMS>;
+  globalSearch: string;
+  onAddFAQ: () => void;
+  onEditFAQ: (f: FAQItem) => void;
+}> = ({ cms, globalSearch, onAddFAQ, onEditFAQ }) => {
+  const filtered = useMemo(() => {
+    let list = cms.faqs;
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter((f) => f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q));
+    }
+    return list;
+  }, [cms.faqs, globalSearch]);
+
+  return (
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <div>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 text-amber-500" />
+            Frequently Asked Questions ({cms.faqs.length})
+          </h2>
+          <p className="text-xs text-slate-500">Manage client questions regarding building permissions, approval timeline & rates</p>
+        </div>
+
+        <button
+          onClick={onAddFAQ}
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add FAQ</span>
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {filtered.map((faq) => (
+          <div key={faq.id} className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-extrabold text-[10px] uppercase">
+                  {faq.category}
+                </span>
+                <h3 className="text-xs font-bold text-slate-900">{faq.question}</h3>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button onClick={() => onEditFAQ(faq)} className="p-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer">
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Delete this FAQ?')) {
+                      cms.deleteFAQ(faq.id);
+                    }
+                  }}
+                  className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed pl-2 border-l-2 border-amber-400">{faq.answer}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 8. SITE SETTINGS TAB
+// ==========================================
 const SettingsTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
   pinChangeInput: string;
-  setPinChangeInput: (str: string) => void;
+  setPinChangeInput: (v: string) => void;
 }> = ({ cms, pinChangeInput, setPinChangeInput }) => {
   const [info, setInfo] = useState(cms.companyInfo);
 
-  const handleSaveInfo = (e: React.FormEvent) => {
+  const handleSubmitInfo = (e: React.FormEvent) => {
     e.preventDefault();
     cms.updateCompanyInfo(info);
   };
 
-  const handleChangePinSubmit = (e: React.FormEvent) => {
+  const handleUpdatePin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinChangeInput.trim()) {
-      cms.changeAdminPin(pinChangeInput);
+    if (cms.changeAdminPin(pinChangeInput)) {
       setPinChangeInput('');
     }
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold font-display text-white">Site Settings & Contact Info</h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Update phone numbers, address, business hours, and admin security PIN.
-        </p>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+          <Settings className="w-5 h-5 text-amber-500" />
+          Site Settings & Business Profile
+        </h2>
+        <p className="text-xs text-slate-500">Edit office details, phone numbers, founder credentials, and security PIN</p>
       </div>
 
-      {/* CONTACT INFO FORM */}
-      <form onSubmit={handleSaveInfo} className="bg-slate-800/90 p-6 rounded-3xl border border-slate-700 space-y-4">
-        <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider mb-2">Company Profile</h3>
+      <form onSubmit={handleSubmitInfo} className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
+        <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">Company & Contact Information</h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Company Name</label>
+            <label className="block font-bold text-slate-700 mb-1">Company Name</label>
             <input
               type="text"
               value={info.name}
               onChange={(e) => setInfo({ ...info, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Founder / Structural Engineer</label>
+            <label className="block font-bold text-slate-700 mb-1">Founder / Engineer Name</label>
             <input
               type="text"
               value={info.founder}
               onChange={(e) => setInfo({ ...info, founder: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Primary Phone Number</label>
+            <label className="block font-bold text-slate-700 mb-1">Primary Phone</label>
             <input
               type="text"
               value={info.phone}
               onChange={(e) => setInfo({ ...info, phone: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">WhatsApp Number (e.g. 918056658861)</label>
+            <label className="block font-bold text-slate-700 mb-1">WhatsApp Number</label>
             <input
               type="text"
               value={info.whatsapp}
               onChange={(e) => setInfo({ ...info, whatsapp: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
-            <input
-              type="email"
-              value={info.email}
-              onChange={(e) => setInfo({ ...info, email: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Business Working Hours</label>
+          <div className="sm:col-span-2">
+            <label className="block font-bold text-slate-700 mb-1">Office Address</label>
             <input
               type="text"
-              value={info.hours}
-              onChange={(e) => setInfo({ ...info, hours: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+              value={info.address}
+              onChange={(e) => setInfo({ ...info, address: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
-        </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Office Address (Virudhachalam)</label>
-          <textarea
-            value={info.address}
-            onChange={(e) => setInfo({ ...info, address: e.target.value })}
-            rows={2}
-            className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
-            required
-          />
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Experience Counter</label>
+            <input
+              type="text"
+              value={info.experienceYears}
+              onChange={(e) => setInfo({ ...info, experienceYears: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Completed Projects Counter</label>
+            <input
+              type="text"
+              value={info.completedProjects}
+              onChange={(e) => setInfo({ ...info, completedProjects: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+            />
+          </div>
         </div>
 
         <button
           type="submit"
-          className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          className="py-2.5 px-5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
         >
           <Save className="w-4 h-4" />
-          <span>Save Company Contact Settings</span>
+          <span>Save Company Info</span>
         </button>
       </form>
 
-      {/* ADMIN PIN CHANGE FORM */}
-      <form onSubmit={handleChangePinSubmit} className="bg-slate-800/90 p-6 rounded-3xl border border-slate-700 space-y-4">
-        <h3 className="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
-          <Shield className="w-4 h-4" />
-          Change Admin Security PIN
+      {/* SECURITY PIN UPDATE */}
+      <form onSubmit={handleUpdatePin} className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-3">
+        <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-emerald-600" />
+          Admin Portal Security PIN
         </h3>
+        <p className="text-xs text-slate-500">Current PIN: <span className="font-mono font-bold text-slate-900">{cms.adminPin}</span></p>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 max-w-md">
           <input
             type="password"
             placeholder="Enter new 4-digit PIN"
             value={pinChangeInput}
             onChange={(e) => setPinChangeInput(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-amber-500"
           />
           <button
             type="submit"
-            className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-md transition-colors cursor-pointer"
+            className="py-2 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shrink-0"
           >
             Update PIN
           </button>
@@ -1129,19 +1621,19 @@ const SettingsTab: React.FC<{
   );
 };
 
-/* =========================================================================
-   TAB 8: BACKUP & RESTORE
-   ========================================================================= */
+// ==========================================
+// 9. BACKUP & RESTORE TAB
+// ==========================================
 const BackupTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
   jsonImportText: string;
-  setJsonImportText: (str: string) => void;
+  setJsonImportText: (v: string) => void;
 }> = ({ cms, jsonImportText, setJsonImportText }) => {
-  const handleImportSubmit = (e: React.FormEvent) => {
+  const handleImport = (e: React.FormEvent) => {
     e.preventDefault();
-    if (jsonImportText.trim()) {
-      const ok = cms.importDataJSON(jsonImportText);
-      if (ok) setJsonImportText('');
+    if (!jsonImportText.trim()) return;
+    if (cms.importDataJSON(jsonImportText)) {
+      setJsonImportText('');
     }
   };
 
@@ -1150,9 +1642,8 @@ const BackupTab: React.FC<{
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        const text = event.target?.result as string;
-        if (text) {
-          cms.importDataJSON(text);
+        if (event.target?.result) {
+          setJsonImportText(event.target.result.toString());
         }
       };
       reader.readAsText(file);
@@ -1160,83 +1651,94 @@ const BackupTab: React.FC<{
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold font-display text-white">Backup & Data Recovery</h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Export your site configuration as a JSON file or restore from a backup.
-        </p>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
+        <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+          <Database className="w-5 h-5 text-amber-500" />
+          Backup, Restore & Data Reset
+        </h2>
+        <p className="text-xs text-slate-500">Export or import entire site content, projects, reviews & price packages in JSON</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* EXPORT BOX */}
-        <div className="p-6 rounded-3xl bg-slate-800/90 border border-slate-700 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-900/40 text-blue-400 flex items-center justify-center">
-            <Download className="w-6 h-6" />
+        {/* EXPORT DATA */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-700 w-fit mb-3">
+              <Download className="w-6 h-6" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Download Site Backup JSON</h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Downloads a complete snapshot file containing all projects, services, prices, client leads, and FAQs.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-white">Download JSON Backup</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Download a full backup of all projects, services, estimator rates, reviews, and contact settings.
-          </p>
 
           <button
-            onClick={cms.exportDataJSON}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() => cms.exportDataJSON()}
+            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
           >
             <Download className="w-4 h-4" />
-            <span>Download Backup JSON File</span>
+            <span>Export JSON File</span>
           </button>
         </div>
 
-        {/* RESTORE DEFAULT BOX */}
-        <div className="p-6 rounded-3xl bg-slate-800/90 border border-slate-700 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-900/40 text-amber-400 flex items-center justify-center">
-            <RotateCcw className="w-6 h-6" />
+        {/* RESET DATA */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4 flex flex-col justify-between">
+          <div>
+            <div className="p-3 rounded-2xl bg-rose-50 text-rose-700 w-fit mb-3">
+              <RotateCcw className="w-6 h-6" />
+            </div>
+            <h3 className="font-bold text-slate-900 text-base">Reset to Default Content</h3>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Restores initial mock data for Prasadh Construction. Use if you wish to clear test entries.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-white">Reset Site Content to Defaults</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Revert all edits and reset the site back to original default mock data.
-          </p>
 
           <button
-            onClick={cms.resetToDefaults}
-            className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() => cms.resetToDefaults()}
+            className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
           >
             <RotateCcw className="w-4 h-4" />
-            <span>Reset All Content To Default</span>
+            <span>Reset Site to Defaults</span>
           </button>
         </div>
       </div>
 
-      {/* IMPORT JSON FORM */}
-      <div className="p-6 rounded-3xl bg-slate-800/90 border border-slate-700 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Upload className="w-4 h-4 text-emerald-400" />
-          Restore From JSON Backup File
+      {/* IMPORT DATA FROM JSON */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
+        <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+          <Upload className="w-5 h-5 text-blue-600" />
+          Restore CMS State from JSON Backup
         </h3>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <label className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl cursor-pointer text-center flex items-center justify-center gap-2">
-            <Upload className="w-4 h-4" />
-            <span>Select JSON File</span>
-            <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
-          </label>
-          <span className="text-xs text-slate-400">or paste JSON payload below:</span>
-        </div>
+        <form onSubmit={handleImport} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Select Backup JSON File</label>
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleFileUpload}
+              className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-800 hover:file:bg-slate-200 cursor-pointer"
+            />
+          </div>
 
-        <form onSubmit={handleImportSubmit} className="space-y-3">
-          <textarea
-            value={jsonImportText}
-            onChange={(e) => setJsonImportText(e.target.value)}
-            placeholder="Paste raw JSON backup content here..."
-            rows={4}
-            className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200 font-mono"
-          />
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Or Paste JSON Payload directly:</label>
+            <textarea
+              value={jsonImportText}
+              onChange={(e) => setJsonImportText(e.target.value)}
+              rows={5}
+              placeholder="Paste backup JSON string here..."
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:border-amber-500"
+            />
+          </div>
+
           <button
             type="submit"
-            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition-colors cursor-pointer"
+            className="py-2.5 px-5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
           >
-            Restore JSON Data
+            <Upload className="w-4 h-4" />
+            <span>Restore JSON Backup</span>
           </button>
         </form>
       </div>
@@ -1244,31 +1746,25 @@ const BackupTab: React.FC<{
   );
 };
 
-/* =========================================================================
-   FORM MODALS (PROJECT, SERVICE, TESTIMONIAL, FAQ)
-   ========================================================================= */
+// ==========================================
+// MODAL FORMS FOR ADD / EDIT OPERATIONS
+// ==========================================
 
-// 1. PROJECT FORM MODAL
-const ProjectFormModal: React.FC<{
-  project: Project | null;
+// 1. LEAD FORM MODAL
+const LeadFormModal: React.FC<{
   onClose: () => void;
-  onSave: (data: Omit<Project, 'id'>) => void;
-  handleImageUpload: (file: File, callback: (str: string) => void) => void;
-}> = ({ project, onClose, onSave, handleImageUpload }) => {
-  const [formData, setFormData] = useState<Omit<Project, 'id'>>({
-    title: project?.title || '',
-    category: project?.category || 'villas',
-    location: project?.location || 'Virudhachalam',
-    area: project?.area || '3,000 Sq. Ft.',
-    completionYear: project?.completionYear || '2024',
-    constructionType: project?.constructionType || 'RCC Frame Structure',
-    image: project?.image || '',
-    description: project?.description || '',
-    highlights: project?.highlights || ['Quality Material Matrix', 'On-Time Handover'],
-    clientName: project?.clientName || 'Er. Client Reference'
+  onSave: (data: Omit<ClientLead, 'id'>) => void;
+}> = ({ onClose, onSave }) => {
+  const [formData, setFormData] = useState<Omit<ClientLead, 'id'>>({
+    name: '',
+    phone: '',
+    location: 'Virudhachalam',
+    serviceRequested: 'Turnkey Residential Construction',
+    estimatedBudget: '₹45,00,000',
+    status: 'New',
+    date: new Date().toISOString().slice(0, 10),
+    notes: ''
   });
-
-  const [highlightInput, setHighlightInput] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1276,148 +1772,83 @@ const ProjectFormModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 max-w-2xl w-full rounded-3xl p-6 sm:p-8 space-y-6 text-white my-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-          <h3 className="text-lg font-bold font-display">
-            {project ? 'Edit Construction Project' : 'Add New Completed Project'}
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-lg w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="text-base font-bold font-display flex items-center gap-2">
+            <Users className="w-5 h-5 text-amber-500" />
+            Log Client Consultation Lead
           </h3>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Client Full Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              placeholder="e.g. Mr. R. Karthik"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Project Title</label>
+              <label className="block font-bold text-slate-700 mb-1">Phone Number</label>
               <input
                 type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                placeholder="+91 98421 88321"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-              >
-                <option value="villas">Luxury Villas</option>
-                <option value="commercial">Commercial Hub</option>
-                <option value="structural">Structural Engineering</option>
-                <option value="interiors">Interior Decor</option>
-                <option value="renovation">Renovation</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Location</label>
+              <label className="block font-bold text-slate-700 mb-1">Site Location</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Built-up Area (e.g. 3,500 Sq. Ft.)</label>
-              <input
-                type="text"
-                value={formData.area}
-                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Completion Year</label>
-              <input
-                type="text"
-                value={formData.completionYear}
-                onChange={(e) => setFormData({ ...formData, completionYear: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Construction Type</label>
-              <input
-                type="text"
-                value={formData.constructionType}
-                onChange={(e) => setFormData({ ...formData, constructionType: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Project Photo URL or Local Upload</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="https://images.unsplash.com/..."
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-                required
-              />
-              <label className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-xs font-bold cursor-pointer shrink-0">
-                Upload File
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleImageUpload(f, (base64) => setFormData({ ...formData, image: base64 }));
-                  }}
-                />
-              </label>
-            </div>
-            {formData.image && (
-              <div className="mt-2 h-24 rounded-xl overflow-hidden border border-slate-700">
-                <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+            <label className="block font-bold text-slate-700 mb-1">Requested Service</label>
+            <input
+              type="text"
+              value={formData.serviceRequested}
+              onChange={(e) => setFormData({ ...formData, serviceRequested: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Client Reference Name</label>
-            <input
-              type="text"
-              value={formData.clientName}
-              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-              required
+            <label className="block font-bold text-slate-700 mb-1">Inquiry Notes / Specs</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              rows={3}
+              placeholder="Site dimensions, floor requirements, preferred package..."
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors cursor-pointer"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer mt-2"
           >
-            Save Project
+            Save Lead Record
           </button>
         </form>
       </div>
@@ -1425,7 +1856,445 @@ const ProjectFormModal: React.FC<{
   );
 };
 
-// 2. SERVICE FORM MODAL
+// 2. PROJECT FORM MODAL
+const ProjectFormModal: React.FC<{
+  project: Project | null;
+  onClose: () => void;
+  onSave: (data: Omit<Project, 'id'>) => void;
+  handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
+}> = ({ project, onClose, onSave, handleImageUpload }) => {
+  const initialImages = project?.images && project.images.length > 0 
+    ? [...project.images] 
+    : (project?.image ? [project.image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80']);
+
+  const [images, setImages] = useState<string[]>(initialImages);
+  const [coverIndex, setCoverIndex] = useState<number>(0);
+  const [newUrlInput, setNewUrlInput] = useState<string>('');
+
+  const [formData, setFormData] = useState<Omit<Project, 'id'>>({
+    title: project?.title || '',
+    category: project?.category || 'villas',
+    location: project?.location || 'Virudhachalam',
+    area: project?.area || '2,400 Sq.Ft',
+    completionYear: project?.completionYear || '2025',
+    constructionType: project?.constructionType || 'RCC Frame Structure',
+    image: project?.image || initialImages[0],
+    images: initialImages,
+    description: project?.description || '',
+    highlights: project?.highlights || ['Teakwood Doors', '3D Elevation', 'Structural Warranty'],
+    clientName: project?.clientName || 'Private Residence Owner'
+  });
+
+  const [highlightInput, setHighlightInput] = useState('');
+
+  // Handle adding image URL
+  const handleAddUrl = () => {
+    if (!newUrlInput.trim()) return;
+    const updated = [...images, newUrlInput.trim()];
+    setImages(updated);
+    setNewUrlInput('');
+  };
+
+  // Handle uploading multiple files
+  const handleMultipleFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const filesArray = Array.from(e.target.files);
+    
+    let processedCount = 0;
+    const newBase64s: string[] = [];
+
+    filesArray.forEach((file) => {
+      handleImageUpload(file, (base64Str) => {
+        newBase64s.push(base64Str);
+        processedCount++;
+        if (processedCount === filesArray.length) {
+          setImages((prev) => [...prev, ...newBase64s]);
+        }
+      });
+    });
+  };
+
+  // Handle set as Cover Photo
+  const handleSetCover = (idx: number) => {
+    setCoverIndex(idx);
+  };
+
+  // Handle remove image
+  const handleRemoveImage = (idx: number) => {
+    if (images.length <= 1) {
+      alert("A project must have at least one photo!");
+      return;
+    }
+    const updated = images.filter((_, i) => i !== idx);
+    setImages(updated);
+    if (coverIndex >= updated.length) {
+      setCoverIndex(0);
+    } else if (coverIndex === idx) {
+      setCoverIndex(0);
+    }
+  };
+
+  // Handle move image
+  const handleMoveImage = (idx: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= images.length) return;
+    
+    const updated = [...images];
+    const temp = updated[idx];
+    updated[idx] = updated[targetIdx];
+    updated[targetIdx] = temp;
+
+    setImages(updated);
+    
+    // adjust coverIndex if affected
+    if (coverIndex === idx) setCoverIndex(targetIdx);
+    else if (coverIndex === targetIdx) setCoverIndex(idx);
+  };
+
+  // Add highlight tag
+  const handleAddHighlight = () => {
+    if (!highlightInput.trim()) return;
+    setFormData((prev) => ({
+      ...prev,
+      highlights: [...prev.highlights, highlightInput.trim()]
+    }));
+    setHighlightInput('');
+  };
+
+  // Remove highlight tag
+  const handleRemoveHighlight = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      highlights: prev.highlights.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (images.length === 0) {
+      alert("Please add at least one image for the project.");
+      return;
+    }
+
+    const primaryCoverImage = images[coverIndex] || images[0];
+    
+    // Reorder images so cover image is at index 0
+    const reorderedImages = [primaryCoverImage, ...images.filter((_, i) => i !== coverIndex)];
+
+    const finalData: Omit<Project, 'id'> = {
+      ...formData,
+      image: primaryCoverImage,
+      images: reorderedImages
+    };
+
+    onSave(finalData);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-2xl w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 className="text-base font-bold font-display flex items-center gap-2">
+              <Building className="w-5 h-5 text-amber-500" />
+              {project ? 'Edit Project Details & Gallery' : 'Add New Portfolio Project'}
+            </h3>
+            <p className="text-xs text-slate-500">Add 1, 3, or more photos and choose which image to set as Cover Photo</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Project Title</label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+              >
+                <option value="villas">Villas / Residential</option>
+                <option value="commercial">Commercial</option>
+                <option value="structural">Structural Design</option>
+                <option value="interiors">Interiors</option>
+                <option value="renovation">Renovation</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Location</label>
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Built-up Area</label>
+              <input
+                type="text"
+                value={formData.area}
+                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Completion Year</label>
+              <input
+                type="text"
+                value={formData.completionYear}
+                onChange={(e) => setFormData({ ...formData, completionYear: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Construction Type / Spec</label>
+              <input
+                type="text"
+                value={formData.constructionType}
+                onChange={(e) => setFormData({ ...formData, constructionType: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                placeholder="e.g. RCC Frame & Glass Facade"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Client Name / Reference</label>
+              <input
+                type="text"
+                value={formData.clientName}
+                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* MULTIPLE IMAGES & COVER PHOTO SELECTION SECTION */}
+          <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block font-extrabold text-amber-950 text-xs flex items-center gap-1.5">
+                  <Images className="w-4 h-4 text-amber-600" />
+                  Project Photos & Gallery ({images.length} added)
+                </label>
+                <p className="text-[11px] text-amber-800">
+                  Upload multiple photos (elevations, interior, blueprint). Set any photo as Cover Image.
+                </p>
+              </div>
+              <span className="px-2 py-1 bg-amber-200 text-amber-900 rounded-lg text-[10px] font-bold uppercase">
+                Image {coverIndex + 1} = Cover Photo
+              </span>
+            </div>
+
+            {/* URL Input & Upload Buttons */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newUrlInput}
+                onChange={(e) => setNewUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddUrl();
+                  }
+                }}
+                className="flex-1 px-3 py-2 bg-white border border-amber-300 rounded-xl font-medium text-slate-900 placeholder:text-slate-400 focus:border-amber-500"
+                placeholder="Paste Image URL (https://...)"
+              />
+              <button
+                type="button"
+                onClick={handleAddUrl}
+                className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shrink-0 cursor-pointer flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add URL</span>
+              </button>
+
+              <label className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl cursor-pointer shrink-0 flex items-center gap-1">
+                <Upload className="w-3.5 h-3.5 text-amber-400" />
+                <span>Upload Files</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleMultipleFilesUpload}
+                />
+              </label>
+            </div>
+
+            {/* GALLERY THUMBNAILS GRID & ACTION CONTROLS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {images.map((imgUrl, idx) => {
+                const isCover = coverIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    className={`p-2.5 rounded-xl border flex items-center gap-3 transition-all ${
+                      isCover
+                        ? 'bg-white border-2 border-amber-500 shadow-md ring-2 ring-amber-400/30'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    {/* Thumbnail Image */}
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-slate-100 border border-slate-200">
+                      <img src={imgUrl} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      <span className="absolute top-0 left-0 bg-black/75 text-white font-mono text-[9px] px-1 font-bold">
+                        #{idx + 1}
+                      </span>
+                    </div>
+
+                    {/* Controls & Details */}
+                    <div className="flex-1 space-y-1 overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        {isCover ? (
+                          <span className="px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-black uppercase rounded-md flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-slate-950" />
+                            Cover Image
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetCover(idx)}
+                            className="px-2 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-slate-200 text-[10px] font-bold rounded-md cursor-pointer"
+                          >
+                            Set as Cover
+                          </button>
+                        )}
+
+                        {/* Reorder & Delete */}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveImage(idx, 'up')}
+                            disabled={idx === 0}
+                            className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 cursor-pointer"
+                            title="Move Up"
+                          >
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveImage(idx, 'down')}
+                            disabled={idx === images.length - 1}
+                            className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-30 cursor-pointer"
+                            title="Move Down"
+                          >
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(idx)}
+                            className="p-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 cursor-pointer ml-1"
+                            title="Delete Photo"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-mono truncate">{imgUrl}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Project Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
+          </div>
+
+          {/* HIGHLIGHTS EDITOR */}
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Key Features / Engineering Highlights</label>
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                value={highlightInput}
+                onChange={(e) => setHighlightInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddHighlight();
+                  }
+                }}
+                className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                placeholder="e.g. Tata Tiscon Fe550D, Rainwater Harvesting..."
+              />
+              <button
+                type="button"
+                onClick={handleAddHighlight}
+                className="px-3 py-2 bg-slate-900 text-white font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Add Feature
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {formData.highlights.map((hl, i) => (
+                <span
+                  key={i}
+                  className="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-lg text-slate-800 text-[11px] font-semibold flex items-center gap-1.5"
+                >
+                  <span>{hl}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveHighlight(i)}
+                    className="text-slate-400 hover:text-rose-600 cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+          >
+            Save Project & Publish Gallery
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// 3. SERVICE FORM MODAL
 const ServiceFormModal: React.FC<{
   service: ServiceItemWithVisibility | null;
   onClose: () => void;
@@ -1433,25 +2302,12 @@ const ServiceFormModal: React.FC<{
 }> = ({ service, onClose, onSave }) => {
   const [formData, setFormData] = useState<Omit<ServiceItemWithVisibility, 'id'>>({
     title: service?.title || '',
-    iconName: service?.iconName || 'Building2',
+    iconName: service?.iconName || 'Building',
     description: service?.description || '',
-    deliverables: service?.deliverables || ['Deliverable 1', 'Deliverable 2'],
-    idealFor: service?.idealFor || 'Residential homeowners & builders',
+    deliverables: service?.deliverables || ['Architectural Plan', '3D Elevation'],
+    idealFor: service?.idealFor || 'Residential Plot Owners',
     hidden: service?.hidden || false
   });
-
-  const [delivInput, setDelivInput] = useState('');
-
-  const addDeliverable = () => {
-    if (delivInput.trim()) {
-      setFormData({ ...formData, deliverables: [...formData.deliverables, delivInput.trim()] });
-      setDelivInput('');
-    }
-  };
-
-  const removeDeliverable = (index: number) => {
-    setFormData({ ...formData, deliverables: formData.deliverables.filter((_, idx) => idx !== index) });
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1459,92 +2315,63 @@ const ServiceFormModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-3xl p-6 space-y-5 text-white my-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h3 className="text-base font-bold font-display">{service ? 'Edit Service Specs' : 'Add Custom Service'}</h3>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-lg w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="text-base font-bold font-display">{service ? 'Edit Service' : 'Add New Service'}</h3>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Service Title</label>
+            <label className="block font-bold text-slate-700 mb-1">Service Title</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Icon Name (Lucide Icon)</label>
-            <select
+            <label className="block font-bold text-slate-700 mb-1">Icon Identifier</label>
+            <input
+              type="text"
               value={formData.iconName}
               onChange={(e) => setFormData({ ...formData, iconName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-            >
-              <option value="Home">Home (Residential)</option>
-              <option value="Building2">Building2 (Commercial)</option>
-              <option value="Compass">Compass (Consultancy)</option>
-              <option value="Ruler">Ruler (Planning)</option>
-              <option value="FileCheck">FileCheck (Approvals)</option>
-              <option value="Paintbrush">Paintbrush (Interiors)</option>
-              <option value="Hammer">Hammer (Renovation)</option>
-              <option value="Key">Key (Turnkey)</option>
-              <option value="ShieldCheck">ShieldCheck (Supervision)</option>
-              <option value="Calculator">Calculator (Estimator)</option>
-            </select>
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Short Description</label>
+            <label className="block font-bold text-slate-700 mb-1">Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Deliverables List</label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={delivInput}
-                onChange={(e) => setDelivInput(e.target.value)}
-                placeholder="Add deliverable feature..."
-                className="flex-1 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white"
-              />
-              <button
-                type="button"
-                onClick={addDeliverable}
-                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-bold cursor-pointer"
-              >
-                Add
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              {formData.deliverables.map((deliv, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-800 text-xs text-slate-200">
-                  <span className="truncate">{deliv}</span>
-                  <button type="button" onClick={() => removeDeliverable(idx)} className="text-red-400 hover:text-red-300">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <label className="block font-bold text-slate-700 mb-1">Target Clientele / Ideal For</label>
+            <input
+              type="text"
+              value={formData.idealFor}
+              onChange={(e) => setFormData({ ...formData, idealFor: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors cursor-pointer"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-2"
           >
             Save Service
           </button>
@@ -1554,21 +2381,21 @@ const ServiceFormModal: React.FC<{
   );
 };
 
-// 3. TESTIMONIAL FORM MODAL
+// 4. TESTIMONIAL FORM MODAL
 const TestimonialFormModal: React.FC<{
   testimonial: Testimonial | null;
   onClose: () => void;
   onSave: (data: Omit<Testimonial, 'id'>) => void;
-  handleImageUpload: (file: File, callback: (str: string) => void) => void;
-}> = ({ testimonial, onClose, onSave, handleImageUpload }) => {
+  handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
+}> = ({ testimonial, onClose, onSave }) => {
   const [formData, setFormData] = useState<Omit<Testimonial, 'id'>>({
     clientName: testimonial?.clientName || '',
     location: testimonial?.location || 'Virudhachalam',
-    projectType: testimonial?.projectType || 'Luxury Villa Construction',
+    projectType: testimonial?.projectType || 'Residential House',
     rating: testimonial?.rating || 5,
-    date: testimonial?.date || 'Recently',
+    date: testimonial?.date || 'Recent',
     comment: testimonial?.comment || '',
-    avatar: testimonial?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+    avatar: testimonial?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
     projectPhoto: testimonial?.projectPhoto || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
     verified: testimonial?.verified ?? true
   });
@@ -1579,78 +2406,67 @@ const TestimonialFormModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-3xl p-6 space-y-4 text-white my-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h3 className="text-base font-bold font-display">{testimonial ? 'Edit Client Review' : 'Add Client Review'}</h3>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-lg w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="text-base font-bold font-display">{testimonial ? 'Edit Review' : 'Add Client Review'}</h3>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Client Name</label>
+            <label className="block font-bold text-slate-700 mb-1">Client Name</label>
             <input
               type="text"
               value={formData.clientName}
               onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Location</label>
+              <label className="block font-bold text-slate-700 mb-1">Location</label>
               <input
                 type="text"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Star Rating (1 - 5)</label>
+              <label className="block font-bold text-slate-700 mb-1">Rating (1 to 5)</label>
               <input
                 type="number"
                 min={1}
                 max={5}
                 value={formData.rating}
                 onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-amber-500"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Project Type</label>
-            <input
-              type="text"
-              value={formData.projectType}
-              onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Review Comment</label>
+            <label className="block font-bold text-slate-700 mb-1">Client Feedback Comment</label>
             <textarea
               value={formData.comment}
               onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors cursor-pointer"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-2"
           >
             Save Review
           </button>
@@ -1660,7 +2476,7 @@ const TestimonialFormModal: React.FC<{
   );
 };
 
-// 4. FAQ FORM MODAL
+// 5. FAQ FORM MODAL
 const FAQFormModal: React.FC<{
   faq: FAQItem | null;
   onClose: () => void;
@@ -1678,22 +2494,22 @@ const FAQFormModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-3xl p-6 space-y-4 text-white my-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-lg w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <h3 className="text-base font-bold font-display">{faq ? 'Edit FAQ' : 'Add FAQ'}</h3>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+            <label className="block font-bold text-slate-700 mb-1">Category</label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-amber-500"
             >
               <option value="construction">Construction</option>
               <option value="cost">Cost & Budget</option>
@@ -1705,30 +2521,30 @@ const FAQFormModal: React.FC<{
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Question</label>
+            <label className="block font-bold text-slate-700 mb-1">Question</label>
             <input
               type="text"
               value={formData.question}
               onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Answer</label>
+            <label className="block font-bold text-slate-700 mb-1">Answer</label>
             <textarea
               value={formData.answer}
               onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white"
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors cursor-pointer"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-2"
           >
             Save FAQ
           </button>

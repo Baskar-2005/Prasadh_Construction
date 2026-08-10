@@ -39,6 +39,12 @@ export const PROJECTS: Project[] = [
     completionYear: "2024",
     constructionType: "RCC Frame & Glass Facade Villa",
     image: heroVillaImage,
+    images: [
+      heroVillaImage,
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80"
+    ],
     description: "A contemporary multi-level luxury bungalow featuring a cantilevered infinity deck, double-height living room, smart home automation, and energy-efficient thermal insulation.",
     highlights: ["Double Height Atrium", "Solar & Rainwater Harvesting", "Custom Teak Joinery", "Tata Tiscon Fe550D Rebar"],
     clientName: "Er. K. Senthil Nathan"
@@ -52,6 +58,11 @@ export const PROJECTS: Project[] = [
     completionYear: "2023",
     constructionType: "G+4 Structural Steel & Concrete Complex",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80"
+    ],
     description: "Multi-tenant commercial hub with high-load basement parking, seismic-resistant structural design, and modern glass curtain walling.",
     highlights: ["Basement Parking Driveway", "VRF Air Conditioning Ready", "Seismic Zone Structural Compliance", "Elevator Core"],
     clientName: "Vrindavan Retail Group"
@@ -65,6 +76,11 @@ export const PROJECTS: Project[] = [
     completionYear: "2024",
     constructionType: "Heavy Structural Steel & Concrete Matrix",
     image: engineeringDeskImage,
+    images: [
+      engineeringDeskImage,
+      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80"
+    ],
     description: "Structural engineering consultancy and execution for heavy machine foundations and vibration-free laboratory environment.",
     highlights: ["High-Strength M35 Grade Concrete", "Ultrasonic Non-Destructive Testing", "Vibration Isolation Slabs", "3D Finite Element Analysis"],
     clientName: "Neyveli Industrial Technologies"
@@ -78,6 +94,11 @@ export const PROJECTS: Project[] = [
     completionYear: "2023",
     constructionType: "Modern Minimalist Villa",
     image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=80"
+    ],
     description: "Elegant residential home designed around central Vaastu-compliant courtyard with floor-to-ceiling glass and perimeter water body.",
     highlights: ["Courtyard Vaastu Layout", "Italian Marble Flooring", "Lush Landscape Integration", "Perimeter Security System"],
     clientName: "Dr. R. Anbarasan"
@@ -91,6 +112,11 @@ export const PROJECTS: Project[] = [
     completionYear: "2024",
     constructionType: "Premium Interior Architecture & Turnkey Decor",
     image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1200&q=80"
+    ],
     description: "Bespoke interior design project utilizing fluted teak paneling, concealed ambient acoustic lighting, and customized quartz island kitchen.",
     highlights: ["Modular German Hardware", "Concealed Magnetic Lighting", "Custom Wardrobes", "Acoustic Ceiling Panels"],
     clientName: "Mr. T. Saravanan"
@@ -104,6 +130,10 @@ export const PROJECTS: Project[] = [
     completionYear: "2023",
     constructionType: "Retrofitting & Architectural Restoration",
     image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+    images: [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80"
+    ],
     description: "Complete structural strengthening and modernization of a 40-year traditional home without compromising structural integrity.",
     highlights: ["Micro-Concrete Jacketing", "Steel Beam Retrofitting", "Waterproofing Matrix", "Modernized Open Plan"],
     clientName: "Er. M. Rajasekaran"

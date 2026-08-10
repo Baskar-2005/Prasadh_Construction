@@ -10,7 +10,10 @@ import {
   Sparkles,
   CheckCircle2,
   Grid,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft,
+  Camera,
+  Images
 } from 'lucide-react';
 import { PROJECTS } from '../data/mockData';
 import { Project } from '../types';
@@ -30,6 +33,7 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
   const { projects } = useCMS();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeModalProject, setActiveModalProject] = useState<Project | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
   const [modalBlueprintMode, setModalBlueprintMode] = useState(false);
 
   // Auto select modal project if selectedProjectId is provided
@@ -38,6 +42,7 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
       const proj = projects.find((p) => p.id === selectedProjectId);
       if (proj) {
         setActiveModalProject(proj);
+        setActiveImageIndex(0);
       }
     }
   }, [selectedProjectId, projects]);
@@ -55,8 +60,15 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
     ? projects
     : projects.filter((p) => p.category === activeCategory);
 
+  const openProjectModal = (proj: Project) => {
+    setActiveModalProject(proj);
+    setActiveImageIndex(0);
+    setModalBlueprintMode(false);
+  };
+
   const closeModal = () => {
     setActiveModalProject(null);
+    setActiveImageIndex(0);
     setModalBlueprintMode(false);
     if (onClearSelectedProject) {
       onClearSelectedProject();
@@ -83,6 +95,27 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [activeModalProject]);
+
+  // Gallery photos list for active modal project
+  const getProjectPhotos = (proj: Project | null) => {
+    if (!proj) return [];
+    if (proj.images && proj.images.length > 0) {
+      return proj.images;
+    }
+    return [proj.image];
+  };
+
+  const currentPhotos = getProjectPhotos(activeModalProject);
+
+  const handleNextPhoto = () => {
+    if (currentPhotos.length <= 1) return;
+    setActiveImageIndex((prev) => (prev + 1) % currentPhotos.length);
+  };
+
+  const handlePrevPhoto = () => {
+    if (currentPhotos.length <= 1) return;
+    setActiveImageIndex((prev) => (prev - 1 + currentPhotos.length) % currentPhotos.length);
+  };
 
   return (
     <section id="projects" className="py-20 md:py-28 bg-[#F8F6F0] relative overflow-hidden">
@@ -126,79 +159,92 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
 
         {/* 2-COLUMN MOBILE & MASONRY GRID SHOWCASE */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
-          {filteredProjects.map((proj) => (
-            <motion.div
-              key={proj.id}
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.4 }}
-              className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-2xl border border-slate-200 transition-all duration-300 flex flex-col justify-between cursor-pointer"
-              onClick={() => setActiveModalProject(proj)}
-            >
-              <div>
-                {/* Image & Badges */}
-                <div className="relative h-36 sm:h-64 overflow-hidden bg-slate-100">
-                  <img
-                    src={proj.image}
-                    alt={proj.title}
-                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
-                    referrerPolicy="no-referrer"
-                  />
-                  
-                  {/* Category Pill */}
-                  <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 px-2 py-0.5 sm:px-3 sm:py-1 bg-[#0F172A]/80 backdrop-blur-md text-amber-300 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-                    {proj.constructionType}
+          {filteredProjects.map((proj) => {
+            const projectPhotoCount = proj.images && proj.images.length > 0 ? proj.images.length : 1;
+            return (
+              <motion.div
+                key={proj.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className="group bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-2xl border border-slate-200 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+                onClick={() => openProjectModal(proj)}
+              >
+                <div>
+                  {/* Image & Badges */}
+                  <div className="relative h-36 sm:h-64 overflow-hidden bg-slate-100">
+                    <img
+                      src={proj.image}
+                      alt={proj.title}
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
+                      referrerPolicy="no-referrer"
+                    />
+                    
+                    {/* Category Pill */}
+                    <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 px-2 py-0.5 sm:px-3 sm:py-1 bg-[#0F172A]/80 backdrop-blur-md text-amber-300 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+                      {proj.constructionType}
+                    </div>
+
+                    {/* Photo Count Badge */}
+                    {projectPhotoCount > 1 && (
+                      <div className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 px-2 py-1 bg-black/75 backdrop-blur-md text-white rounded-lg text-[9px] sm:text-[11px] font-bold flex items-center gap-1 border border-white/20">
+                        <Camera className="w-3 h-3 text-amber-400" />
+                        <span>{projectPhotoCount} Photos</span>
+                      </div>
+                    )}
+
+                    {/* Zoom Overlay Button */}
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="p-2 sm:p-3 bg-white/90 rounded-full text-slate-900 shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
+                        <Maximize2 className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Zoom Overlay Button */}
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="p-2 sm:p-3 bg-white/90 rounded-full text-slate-900 shadow-xl transform scale-90 group-hover:scale-100 transition-transform">
-                      <Maximize2 className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
-                    </span>
+                  {/* Content */}
+                  <div className="p-3 sm:p-6">
+                    <div className="flex items-center gap-1 text-[10px] sm:text-xs text-[#1E3A8A] font-semibold mb-1 sm:mb-2">
+                      <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                      <span className="truncate">{proj.location}</span>
+                    </div>
+
+                    <h3 className="text-xs sm:text-xl font-bold text-[#0F172A] font-display mb-1 sm:mb-2 group-hover:text-[#1E3A8A] transition-colors leading-tight">
+                      {proj.title}
+                    </h3>
+
+                    <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 mb-2 sm:mb-4 leading-tight sm:leading-relaxed">
+                      {proj.description}
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 font-medium">
+                      <div className="flex items-center gap-1">
+                        <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
+                        <span>{proj.area}</span>
+                      </div>
+                      <div className="flex items-center gap-1 sm:justify-end">
+                        <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
+                        <span>Completed {proj.completionYear}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-3 sm:p-6">
-                  <div className="flex items-center gap-1 text-[10px] sm:text-xs text-[#1E3A8A] font-semibold mb-1 sm:mb-2">
-                    <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                    <span className="truncate">{proj.location}</span>
-                  </div>
-
-                  <h3 className="text-xs sm:text-xl font-bold text-[#0F172A] font-display mb-1 sm:mb-2 group-hover:text-[#1E3A8A] transition-colors leading-tight">
-                    {proj.title}
-                  </h3>
-
-                  <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 mb-2 sm:mb-4 leading-tight sm:leading-relaxed">
-                    {proj.description}
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-500 font-medium">
-                    <div className="flex items-center gap-1">
-                      <Layers className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
-                      <span>{proj.area}</span>
-                    </div>
-                    <div className="flex items-center gap-1 sm:justify-end">
-                      <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 shrink-0" />
-                      <span>Completed {proj.completionYear}</span>
-                    </div>
-                  </div>
+                <div className="px-3 pb-3 sm:px-6 sm:pb-6 pt-1 sm:pt-2 flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#1E3A8A] group-hover:text-[#0F172A]">
+                  <span className="truncate">
+                    {projectPhotoCount > 1 ? `View All ${projectPhotoCount} Photos & Specs` : 'View Specs & Blueprint'}
+                  </span>
+                  <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
                 </div>
-              </div>
-
-              <div className="px-3 pb-3 sm:px-6 sm:pb-6 pt-1 sm:pt-2 flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#1E3A8A] group-hover:text-[#0F172A]">
-                <span className="truncate">View Specs & Blueprint</span>
-                <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform shrink-0" />
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
       </div>
 
-      {/* FULLSCREEN PROJECT LIGHTBOX & BLUEPRINT MODAL */}
+      {/* FULLSCREEN PROJECT LIGHTBOX & MULTI-PHOTO GALLERY MODAL */}
       <AnimatePresence>
         {activeModalProject && (
           <div
@@ -225,18 +271,48 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
 
               {/* Scrollable Content Container */}
               <div className="overflow-y-auto flex-1">
-                {/* Top Hero Image Banner with Blueprint Mode Toggle */}
-                <div className="relative h-64 sm:h-80 md:h-[380px] overflow-hidden bg-slate-900">
+                {/* Top Hero Image Banner with Multi-Photo Switcher & Blueprint Mode Toggle */}
+                <div className="relative h-64 sm:h-80 md:h-[400px] overflow-hidden bg-slate-950 group/gallery">
                   <img
-                    src={activeModalProject.image}
-                    alt={activeModalProject.title}
-                    className="w-full h-full object-cover"
+                    src={currentPhotos[activeImageIndex] || activeModalProject.image}
+                    alt={`${activeModalProject.title} photo ${activeImageIndex + 1}`}
+                    className="w-full h-full object-cover transition-all duration-300"
                     referrerPolicy="no-referrer"
                   />
 
+                  {/* Prev / Next Arrows for Multi-Photos */}
+                  {currentPhotos.length > 1 && (
+                    <>
+                      <button
+                        onClick={handlePrevPhoto}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white border border-white/20 shadow-md transition-all cursor-pointer hover:scale-110"
+                        title="Previous Photo"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={handleNextPhoto}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white border border-white/20 shadow-md transition-all cursor-pointer hover:scale-110"
+                        title="Next Photo"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Photo Counter Badge */}
+                  {currentPhotos.length > 1 && (
+                    <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-slate-900/80 backdrop-blur-md text-amber-300 rounded-full text-xs font-mono font-bold border border-amber-400/30 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>
+                        Photo {activeImageIndex + 1} of {currentPhotos.length}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Blueprint Mode Overlay */}
                   {modalBlueprintMode && (
-                    <div className="absolute inset-0 bg-[#1E3A8A]/60 mix-blend-multiply backdrop-blur-[2px] flex items-center justify-center">
+                    <div className="absolute inset-0 z-10 bg-[#1E3A8A]/60 mix-blend-multiply backdrop-blur-[2px] flex items-center justify-center">
                       <div className="p-4 sm:p-6 rounded-2xl border-2 border-dashed border-amber-300 text-center text-white font-mono">
                         <p className="text-amber-300 font-bold uppercase tracking-widest text-xs sm:text-sm">
                           STRUCTURAL BLUEPRINT METRICS
@@ -247,19 +323,21 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                     </div>
                   )}
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent flex items-end p-4 sm:p-8">
-                    <div className="text-white space-y-1">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-amber-400 text-slate-950 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
-                          {activeModalProject.constructionType}
-                        </span>
-                        <button
-                          onClick={() => setModalBlueprintMode(!modalBlueprintMode)}
-                          className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-[9px] sm:text-[10px] font-bold text-white flex items-center gap-1 border border-white/30 cursor-pointer"
-                        >
-                          <Grid className="w-3 h-3 text-amber-300" />
-                          <span>{modalBlueprintMode ? 'Photo Mode' : 'Blueprint Mode'}</span>
-                        </button>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent flex items-end p-4 sm:p-8">
+                    <div className="text-white space-y-1 w-full">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-amber-400 text-slate-950 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
+                            {activeModalProject.constructionType}
+                          </span>
+                          <button
+                            onClick={() => setModalBlueprintMode(!modalBlueprintMode)}
+                            className="px-2.5 py-0.5 sm:px-3 sm:py-1 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full text-[9px] sm:text-[10px] font-bold text-white flex items-center gap-1 border border-white/30 cursor-pointer"
+                          >
+                            <Grid className="w-3 h-3 text-amber-300" />
+                            <span>{modalBlueprintMode ? 'Photo Mode' : 'Blueprint Mode'}</span>
+                          </button>
+                        </div>
                       </div>
 
                       <h3 className="text-xl sm:text-3xl font-extrabold font-display leading-tight pr-10">
@@ -275,6 +353,34 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* THUMBNAIL GALLERY BAR IF MULTIPLE PHOTOS */}
+                {currentPhotos.length > 1 && (
+                  <div className="bg-slate-900 p-3 border-t border-slate-800 overflow-x-auto flex items-center gap-2.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-1">
+                      <Images className="w-3.5 h-3.5 text-amber-400" />
+                      Gallery:
+                    </span>
+                    {currentPhotos.map((imgUrl, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`relative w-16 h-12 sm:w-20 sm:h-14 rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                          activeImageIndex === idx
+                            ? 'border-amber-400 ring-2 ring-amber-400/50 scale-105'
+                            : 'border-slate-700 opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute bottom-0 inset-x-0 bg-amber-500 text-slate-950 text-[8px] font-black uppercase text-center py-0.2">
+                            Cover
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Modal Body Specifications */}
                 <div className="p-4 sm:p-8 space-y-5 sm:space-y-6">

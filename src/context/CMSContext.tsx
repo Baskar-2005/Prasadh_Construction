@@ -60,6 +60,58 @@ export const DEFAULT_ESTIMATOR_RATES: EstimatorRates = {
   cementMultiplier: 0.42
 };
 
+export interface ClientLead {
+  id: string;
+  name: string;
+  phone: string;
+  location: string;
+  serviceRequested: string;
+  estimatedBudget?: string;
+  areaSqFt?: number;
+  status: 'New' | 'Contacted' | 'Site Visited' | 'Estimate Sent' | 'Converted' | 'Closed';
+  date: string;
+  notes?: string;
+}
+
+export const DEFAULT_LEADS: ClientLead[] = [
+  {
+    id: 'lead-1',
+    name: 'Mr. R. Karthik',
+    phone: '+91 98421 88321',
+    location: 'Velan Nagar, Virudhachalam',
+    serviceRequested: 'Turnkey Residential Construction (G+1)',
+    estimatedBudget: '₹52,40,000',
+    areaSqFt: 2200,
+    status: 'New',
+    date: '2026-08-09',
+    notes: 'Interested in Premium package, requested structural drawing consultation.'
+  },
+  {
+    id: 'lead-2',
+    name: 'Senthil Kumar B.',
+    phone: '+91 94432 12098',
+    location: 'Cuddalore Main Road, Virudhachalam',
+    serviceRequested: '3D Elevation & Structural Engineering',
+    estimatedBudget: '₹1,85,000',
+    areaSqFt: 1800,
+    status: 'Contacted',
+    date: '2026-08-07',
+    notes: 'Site visit scheduled for coming Saturday at 10 AM.'
+  },
+  {
+    id: 'lead-3',
+    name: 'Dr. Anbarasan',
+    phone: '+91 97890 54321',
+    location: 'Neyveli Township Outer',
+    serviceRequested: 'Commercial Complex & Hospital Design',
+    estimatedBudget: '₹1.25 Crore',
+    areaSqFt: 4500,
+    status: 'Site Visited',
+    date: '2026-08-04',
+    notes: 'Floor plan blueprint submitted for municipal approval.'
+  }
+];
+
 export interface ToastNotification {
   id: string;
   message: string;
@@ -73,6 +125,7 @@ interface CMSContextType {
   testimonials: Testimonial[];
   faqs: FAQItem[];
   estimatorRates: EstimatorRates;
+  leads: ClientLead[];
   adminPin: string;
   isAuthenticated: boolean;
   toast: ToastNotification | null;
@@ -90,6 +143,11 @@ interface CMSContextType {
   loginAdmin: (pin: string) => boolean;
   logoutAdmin: () => void;
   changeAdminPin: (newPin: string) => boolean;
+
+  // Leads CRUD
+  addLead: (lead: Omit<ClientLead, 'id'>) => void;
+  updateLeadStatus: (id: string, status: ClientLead['status'], notes?: string) => void;
+  deleteLead: (id: string) => void;
 
   // Projects CRUD
   addProject: (project: Omit<Project, 'id'>) => void;
@@ -135,6 +193,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [testimonials, setTestimonials] = useState<Testimonial[]>(DEFAULT_TESTIMONIALS);
   const [faqs, setFaqs] = useState<FAQItem[]>(DEFAULT_FAQS);
   const [estimatorRates, setEstimatorRates] = useState<EstimatorRates>(DEFAULT_ESTIMATOR_RATES);
+  const [leads, setLeads] = useState<ClientLead[]>(DEFAULT_LEADS);
   const [adminPin, setAdminPin] = useState<string>(DEFAULT_PIN);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastNotification | null>(null);
@@ -160,6 +219,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (parsed.testimonials && Array.isArray(parsed.testimonials)) setTestimonials(parsed.testimonials);
         if (parsed.faqs && Array.isArray(parsed.faqs)) setFaqs(parsed.faqs);
         if (parsed.estimatorRates) setEstimatorRates(parsed.estimatorRates);
+        if (parsed.leads && Array.isArray(parsed.leads)) setLeads(parsed.leads);
         if (parsed.adminPin) setAdminPin(parsed.adminPin);
       }
 
@@ -180,6 +240,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     testimonials?: Testimonial[];
     faqs?: FAQItem[];
     estimatorRates?: EstimatorRates;
+    leads?: ClientLead[];
     adminPin?: string;
   }) => {
     try {
@@ -190,11 +251,29 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         testimonials: updatedState.testimonials ?? testimonials,
         faqs: updatedState.faqs ?? faqs,
         estimatorRates: updatedState.estimatorRates ?? estimatorRates,
+        leads: updatedState.leads ?? leads,
         adminPin: updatedState.adminPin ?? adminPin
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
     } catch (err) {
-      console.error('Failed to save state to localStorage:', err);
+      console.warn('Storage limit reached or failed to save state to localStorage:', err);
+      try {
+        // Fallback: compress state or preserve critical state without excessive lead logs if storage is full
+        const compactState = {
+          companyInfo: updatedState.companyInfo ?? companyInfo,
+          projects: updatedState.projects ?? projects,
+          services: updatedState.services ?? services,
+          testimonials: updatedState.testimonials ?? testimonials,
+          faqs: updatedState.faqs ?? faqs,
+          estimatorRates: updatedState.estimatorRates ?? estimatorRates,
+          leads: (updatedState.leads ?? leads).slice(0, 10),
+          adminPin: updatedState.adminPin ?? adminPin
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(compactState));
+      } catch (fallbackErr) {
+        // If still full, silently catch so the application continues seamlessly in memory
+        console.warn('Active session state retained in memory.');
+      }
     }
   };
 
@@ -222,7 +301,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logoutAdmin = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
-    showToast('Logged out of Admin Portal', 'info');
+    closeDashboard();
+    showToast('Logged out of Admin Portal. Returned to main website.', 'info');
   };
 
   const changeAdminPin = (newPin: string): boolean => {
@@ -235,6 +315,32 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     saveStateToStorage({ adminPin: cleanPin });
     showToast('Admin PIN updated successfully', 'success');
     return true;
+  };
+
+  // Leads CRUD
+  const addLead = (leadData: Omit<ClientLead, 'id'>) => {
+    const newLead: ClientLead = {
+      ...leadData,
+      id: `lead-${Date.now()}`
+    };
+    const next = [newLead, ...leads];
+    setLeads(next);
+    saveStateToStorage({ leads: next });
+    showToast(`New client lead logged for ${leadData.name}`);
+  };
+
+  const updateLeadStatus = (id: string, status: ClientLead['status'], notes?: string) => {
+    const next = leads.map((l) => (l.id === id ? { ...l, status, ...(notes !== undefined ? { notes } : {}) } : l));
+    setLeads(next);
+    saveStateToStorage({ leads: next });
+    showToast(`Lead status updated to "${status}"`);
+  };
+
+  const deleteLead = (id: string) => {
+    const next = leads.filter((l) => l.id !== id);
+    setLeads(next);
+    saveStateToStorage({ leads: next });
+    showToast('Lead record removed', 'info');
   };
 
   // Projects CRUD
@@ -374,6 +480,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       testimonials,
       faqs,
       estimatorRates,
+      leads,
       adminPin,
       exportedAt: new Date().toISOString()
     };
@@ -396,6 +503,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (parsed.testimonials && Array.isArray(parsed.testimonials)) setTestimonials(parsed.testimonials);
       if (parsed.faqs && Array.isArray(parsed.faqs)) setFaqs(parsed.faqs);
       if (parsed.estimatorRates) setEstimatorRates(parsed.estimatorRates);
+      if (parsed.leads && Array.isArray(parsed.leads)) setLeads(parsed.leads);
       if (parsed.adminPin) setAdminPin(parsed.adminPin);
 
       saveStateToStorage({
@@ -405,6 +513,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         testimonials: parsed.testimonials,
         faqs: parsed.faqs,
         estimatorRates: parsed.estimatorRates,
+        leads: parsed.leads,
         adminPin: parsed.adminPin
       });
 
@@ -424,6 +533,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setTestimonials(DEFAULT_TESTIMONIALS);
       setFaqs(DEFAULT_FAQS);
       setEstimatorRates(DEFAULT_ESTIMATOR_RATES);
+      setLeads(DEFAULT_LEADS);
       setAdminPin(DEFAULT_PIN);
       localStorage.removeItem(STORAGE_KEY);
       showToast('All data reset to defaults', 'info');
@@ -439,6 +549,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         testimonials,
         faqs,
         estimatorRates,
+        leads,
         adminPin,
         isAuthenticated,
         toast,
@@ -452,6 +563,9 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginAdmin,
         logoutAdmin,
         changeAdminPin,
+        addLead,
+        updateLeadStatus,
+        deleteLead,
         addProject,
         updateProject,
         deleteProject,
