@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Star, MapPin, Quote, ShieldCheck, Plus, X, Send } from 'lucide-react';
 import { TESTIMONIALS } from '../data/mockData';
 import { Testimonial } from '../types';
+import { useCMS } from '../context/CMSContext';
 
 export const Testimonials: React.FC = () => {
-  const [reviewsList, setReviewsList] = useState<Testimonial[]>(TESTIMONIALS);
+  const { testimonials, addTestimonial } = useCMS();
   const [showAddReviewModal, setShowAddReviewModal] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [newLocation, setNewLocation] = useState('Virudhachalam');
@@ -18,8 +19,7 @@ export const Testimonials: React.FC = () => {
     e.preventDefault();
     if (!newClientName || !newComment) return;
 
-    const newRev: Testimonial = {
-      id: `test-${Date.now()}`,
+    addTestimonial({
       clientName: newClientName,
       location: newLocation,
       projectType: newProjectType || 'Residential Home',
@@ -29,9 +29,8 @@ export const Testimonials: React.FC = () => {
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
       projectPhoto: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
       verified: true
-    };
+    });
 
-    setReviewsList([newRev, ...reviewsList]);
     setSubmittedMessage(true);
     setTimeout(() => {
       setSubmittedMessage(false);
@@ -83,7 +82,7 @@ export const Testimonials: React.FC = () => {
 
         {/* GOOGLE REVIEWS STYLE CARDS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {reviewsList.map((rev) => (
+          {testimonials.map((rev) => (
             <motion.div
               key={rev.id}
               whileHover={{ y: -6, transition: { duration: 0.2 } }}

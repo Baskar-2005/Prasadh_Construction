@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, Search, HelpCircle } from 'lucide-react';
 import { FAQS } from '../data/mockData';
+import { useCMS } from '../context/CMSContext';
 
 export const FAQ: React.FC = () => {
+  const { faqs } = useCMS();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq-1');
@@ -18,7 +20,7 @@ export const FAQ: React.FC = () => {
     { id: 'warranty', label: 'Warranty' }
   ];
 
-  const filteredFaqs = FAQS.filter((f) => {
+  const filteredFaqs = faqs.filter((f) => {
     const matchesCategory = activeCategory === 'all' || f.category === activeCategory;
     const matchesSearch = searchQuery === '' || 
       f.question.toLowerCase().includes(searchQuery.toLowerCase()) ||

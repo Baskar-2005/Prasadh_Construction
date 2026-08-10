@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { PROJECTS } from '../data/mockData';
 import { Project } from '../types';
+import { useCMS } from '../context/CMSContext';
 
 interface ProjectShowcaseProps {
   selectedProjectId?: string | null;
@@ -26,6 +27,7 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
   onClearSelectedProject,
   onOpenConsultationModal
 }) => {
+  const { projects } = useCMS();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [activeModalProject, setActiveModalProject] = useState<Project | null>(null);
   const [modalBlueprintMode, setModalBlueprintMode] = useState(false);
@@ -33,12 +35,12 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
   // Auto select modal project if selectedProjectId is provided
   React.useEffect(() => {
     if (selectedProjectId) {
-      const proj = PROJECTS.find((p) => p.id === selectedProjectId);
+      const proj = projects.find((p) => p.id === selectedProjectId);
       if (proj) {
         setActiveModalProject(proj);
       }
     }
-  }, [selectedProjectId]);
+  }, [selectedProjectId, projects]);
 
   const categories = [
     { id: 'all', label: 'All Projects' },
@@ -50,8 +52,8 @@ export const ProjectShowcase: React.FC<ProjectShowcaseProps> = ({
   ];
 
   const filteredProjects = activeCategory === 'all'
-    ? PROJECTS
-    : PROJECTS.filter((p) => p.category === activeCategory);
+    ? projects
+    : projects.filter((p) => p.category === activeCategory);
 
   const closeModal = () => {
     setActiveModalProject(null);

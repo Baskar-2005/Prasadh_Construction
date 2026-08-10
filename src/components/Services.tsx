@@ -18,12 +18,15 @@ import {
 } from 'lucide-react';
 import { SERVICES } from '../data/mockData';
 import { ServiceItem } from '../types';
+import { useCMS } from '../context/CMSContext';
 
 interface ServicesProps {
   onOpenConsultationModal: (serviceTitle?: string) => void;
 }
 
 export const Services: React.FC<ServicesProps> = ({ onOpenConsultationModal }) => {
+  const { services } = useCMS();
+  const visibleServices = services.filter((s) => !s.hidden);
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
 
   const getServiceIcon = (iconName: string, className = "w-4 h-4 sm:w-6 sm:h-6") => {
@@ -67,7 +70,7 @@ export const Services: React.FC<ServicesProps> = ({ onOpenConsultationModal }) =
 
         {/* 10 Services Grid - 2 columns on mobile */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-6">
-          {SERVICES.map((serv, index) => (
+          {visibleServices.map((serv, index) => (
             <motion.div
               key={serv.id}
               initial={{ opacity: 0, y: 30 }}

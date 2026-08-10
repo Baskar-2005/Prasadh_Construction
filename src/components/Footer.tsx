@@ -1,9 +1,12 @@
 import React from 'react';
-import { Phone, Mail, MapPin, ArrowUp, Heart, Star } from 'lucide-react';
+import { Phone, Mail, MapPin, ArrowUp, Heart, Star, Lock, LayoutDashboard } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
 import prasadhLogoEmblem from '../assets/images/prasadh_logo_emblem_1786205642641.jpg';
+import { useCMS } from '../context/CMSContext';
 
 export const Footer: React.FC = () => {
+  const { companyInfo, openLoginModal, openDashboard, isAuthenticated } = useCMS();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -95,16 +98,16 @@ export const Footer: React.FC = () => {
               Virudhachalam Office
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              📍 {COMPANY_INFO.address}
+              📍 {companyInfo.address}
             </p>
             <p className="text-xs text-slate-300">
-              📞 <a href={`tel:${COMPANY_INFO.phone}`} className="hover:text-amber-300 font-semibold">{COMPANY_INFO.phone}</a>
+              📞 <a href={`tel:${companyInfo.phone}`} className="hover:text-amber-300 font-semibold">{companyInfo.phone}</a>
             </p>
             <p className="text-xs text-slate-300 truncate">
-              ✉️ <a href={`mailto:${COMPANY_INFO.email}`} className="hover:text-amber-300">{COMPANY_INFO.email}</a>
+              ✉️ <a href={`mailto:${companyInfo.email}`} className="hover:text-amber-300">{companyInfo.email}</a>
             </p>
             <p className="text-[11px] text-slate-400 mt-2">
-              ⏰ {COMPANY_INFO.hours}
+              ⏰ {companyInfo.hours}
             </p>
           </div>
 
@@ -116,7 +119,27 @@ export const Footer: React.FC = () => {
             © {new Date().getFullYear()} Prasadh Construction Company & Consultant. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            {isAuthenticated ? (
+              <button
+                onClick={openDashboard}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/30 transition-all text-[11px] font-semibold"
+                title="Open Admin CMS Dashboard"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                CMS Dashboard
+              </button>
+            ) : (
+              <button
+                onClick={openLoginModal}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 border border-slate-800 transition-all text-[11px] font-medium"
+                title="Admin Content Management Login"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                Admin CMS
+              </button>
+            )}
+
             <button
               onClick={scrollToTop}
               className="p-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 transition-colors border border-slate-800"

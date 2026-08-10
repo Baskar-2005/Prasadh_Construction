@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Calculator, CheckCircle2, Send, Download, Layers, ShieldCheck, Sparkles } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
+import { useCMS } from '../context/CMSContext';
 
 interface CostEstimatorProps {
   onOpenConsultationModal: (details?: string) => void;
 }
 
 export const CostEstimator: React.FC<CostEstimatorProps> = ({ onOpenConsultationModal }) => {
+  const { estimatorRates, companyInfo } = useCMS();
   const [areaSqFt, setAreaSqFt] = useState<number>(2400);
   const [packageType, setPackageType] = useState<'standard' | 'premium' | 'sovereign'>('premium');
   const [floors, setFloors] = useState<number>(2); // G+1
@@ -18,24 +20,24 @@ export const CostEstimator: React.FC<CostEstimatorProps> = ({ onOpenConsultation
   // Cost Per Sq Ft Logic
   const getRatePerSqFt = () => {
     switch (packageType) {
-      case 'standard': return 2050;
-      case 'premium': return 2350;
-      case 'sovereign': return 2750;
+      case 'standard': return estimatorRates.standardRate;
+      case 'premium': return estimatorRates.premiumRate;
+      case 'sovereign': return estimatorRates.sovereignRate;
     }
   };
 
   const baseRate = getRatePerSqFt();
   const rawBaseCost = areaSqFt * baseRate * (1 + (floors - 1) * 0.12);
   
-  const structAddon = includeStructuralDesign ? 45000 : 0;
-  const interiorAddon = includeInterior ? areaSqFt * 450 : 0;
-  const approvalAddon = includeApproval ? 25000 : 0;
+  const structAddon = includeStructuralDesign ? estimatorRates.structAddon : 0;
+  const interiorAddon = includeInterior ? areaSqFt * estimatorRates.interiorAddonPerSqFt : 0;
+  const approvalAddon = includeApproval ? estimatorRates.approvalAddon : 0;
 
   const totalEstimatedCost = Math.round(rawBaseCost + structAddon + interiorAddon + approvalAddon);
 
   // Material Quantities Approximations
-  const estimatedSteelTons = (areaSqFt * 0.0035 * (1 + (floors - 1) * 0.15)).toFixed(1);
-  const estimatedCementBags = Math.round(areaSqFt * 0.42 * (1 + (floors - 1) * 0.12));
+  const estimatedSteelTons = (areaSqFt * estimatorRates.steelMultiplier * (1 + (floors - 1) * 0.15)).toFixed(1);
+  const estimatedCementBags = Math.round(areaSqFt * estimatorRates.cementMultiplier * (1 + (floors - 1) * 0.12));
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -53,7 +55,7 @@ export const CostEstimator: React.FC<CostEstimatorProps> = ({ onOpenConsultation
 • Total Estimated Budget: ${formatCurrency(totalEstimatedCost)}
 Please share an itemized BOQ for my site in Virudhachalam.`;
 
-    const url = `https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(text)}`;
+    const url = `https://wa.me/${companyInfo.whatsapp}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
 
