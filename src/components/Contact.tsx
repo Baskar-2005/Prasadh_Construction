@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   ExternalLink,
   Building,
-  Compass
+  Compass,
+  LocateFixed,
+  Loader2
 } from 'lucide-react';
 import { useCMS } from '../context/CMSContext';
 
@@ -28,12 +30,45 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
   const [mapLocationUrl, setMapLocationUrl] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationCaptured, setLocationCaptured] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (initialServiceTitle) {
       setProjectType(initialServiceTitle);
     }
   }, [initialServiceTitle]);
+
+  const handleGetLiveLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        setMapLocationUrl(mapsUrl);
+        setIsLocating(false);
+        setLocationCaptured(true);
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationError('Location permission denied. Please type your plot address or paste a link manually below.');
+        } else {
+          setLocationError('Unable to retrieve GPS location. Please type your site address below.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +83,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
 • Phone: ${phone || 'N/A'}
 • Project Type: ${projectType}
 • Budget: ${budget}
-• Map Location: ${mapLocationUrl || 'Not provided'}
+• Site Address/GPS Location: ${mapLocationUrl || 'Not provided'}
 • Message: ${message || 'Please contact me regarding site visit.'}`;
 
     const url = `https://wa.me/${companyInfo.whatsapp || '918056658861'}?text=${encodeURIComponent(text)}`;
@@ -96,14 +131,22 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   <div className="p-3 rounded-2xl bg-blue-50 text-[#1E3A8A] shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Main Office</h4>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5 leading-relaxed">
-                      {companyInfo.address}
-                    </p>
-                    <p className="text-[11px] text-[#1E3A8A] font-medium mt-1">
-                      Virudhachalam & Villupuram Branches
-                    </p>
+                  <div className="space-y-2">
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Main Office</h4>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5 leading-relaxed">
+                        HO. 160/A3, ceramic Aladi Road Virudhachalam 606001
+                      </p>
+                    </div>
+
+                    {companyInfo.branchAddress && (
+                      <div className="pt-2 border-t border-slate-100">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-amber-700">Branch Office (Villupuram)</h4>
+                        <p className="text-xs sm:text-sm font-medium text-slate-700 mt-0.5 leading-relaxed">
+                          {companyInfo.branchAddress}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -124,7 +167,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                       href={`tel:${companyInfo.secondaryPhone}`}
                       className="text-xs text-slate-600 font-semibold hover:text-[#1E3A8A] block mt-0.5"
                     >
-                      Secondary: {companyInfo.secondaryPhone}
+                      Secondary: "+91 81108 18861"
                     </a>
                   </div>
                 </div>
@@ -157,6 +200,20 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                     </p>
                   </div>
                 </div>
+
+                {companyInfo.gstin && (
+                  <div className="flex items-start gap-3.5 pt-2 border-t border-slate-100">
+                    <div className="px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 font-extrabold text-[10px] shrink-0">
+                      GSTIN
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">GST Registration</h4>
+                      <p className="text-xs sm:text-sm font-bold text-slate-800 mt-0.5 font-mono">
+                        {companyInfo.gstin}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -174,31 +231,34 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
             <div className="bg-[#0F172A] text-white p-6 rounded-3xl shadow-md border border-slate-800 relative overflow-hidden">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold uppercase tracking-widest text-amber-300">
-                  Google Maps Location
+                  Main Office Location
                 </span>
                 <a
-                  href="https://maps.google.com/?q=Virudhachalam+Tamil+Nadu"
+                  href={`https://maps.google.com/?q=${encodeURIComponent('160/A3, Ceramic Aladi Road, Virudhachalam 606001')}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[11px] text-slate-300 hover:text-white flex items-center gap-1"
+                  className="text-[11px] text-amber-300 hover:text-white flex items-center gap-1 font-semibold transition-colors"
                 >
-                  Open in Maps <ExternalLink className="w-3 h-3" />
+                  Open in Google Maps <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
 
-              <div className="relative h-44 rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 mb-3">
-                {/* Embed Styled Google Maps Iframe for Virudhachalam */}
+              <div className="relative h-48 rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 mb-3 shadow-inner">
+                {/* Embed Styled Google Maps Iframe for 160/A3 Ceramic Aladi Road Virudhachalam */}
                 <iframe
                   title="Prasadh Construction Virudhachalam Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15655.485741639!2d79.3100!3d11.5200!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a54d5b244444445%3A0x2444444444444445!2sVirudhachalam%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1620000000000!5m2!1sen!2sin"
-                  className="w-full h-full border-0 grayscale opacity-85 hover:grayscale-0 transition-all duration-500"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent('160/A3, Ceramic Aladi Road, Virudhachalam 606001')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                  className="w-full h-full border-0 transition-all duration-500 hover:opacity-100"
                   loading="lazy"
                 />
               </div>
 
-              <p className="text-[11px] text-slate-300">
-                📍 140/2A, Velan Nagar, Aladi Road, Virudhachalam (Landmark: Near Aladi Road Bus Stop)
-              </p>
+              <div className="flex items-start gap-2 text-xs text-slate-300">
+                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="font-medium leading-relaxed">
+                  {'HO. 160/A3, Ceramic Aladi Road, Virudhachalam - 606001'}
+                </p>
+              </div>
             </div>
 
           </div>
@@ -225,7 +285,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   Inquiry Received Successfully!
                 </h4>
                 <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed max-w-md mx-auto">
-                  Thank you, <span className="font-bold">{name}</span>. Er. V. Prasadh and our site engineering team will review your project details and contact you at <span className="font-bold">{phone}</span> within 24 hours.
+                  Thank you, <span className="font-bold">{name}</span>. Er. S. Vishnu Prasadh and our site engineering team will review your project details and contact you at <span className="font-bold">{phone}</span> within 24 hours.
                 </p>
                 <div className="pt-2">
                   <button
@@ -312,18 +372,75 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
 
                 <div>
                   <label className="text-xs font-bold text-slate-700 flex items-center justify-between mb-1.5">
-                    <span>Google Maps Location Link (Optional)</span>
-                    <span className="text-[10px] text-[#1E3A8A] font-normal">Paste GPS pin or map link</span>
+                    <span>Site / Plot Location</span>
+                    <span className="text-[10px] bg-blue-50 text-[#1E3A8A] px-2 py-0.5 rounded-md font-semibold">Live GPS or Address</span>
                   </label>
-                  <div className="relative">
-                    <Compass className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                    <input
-                      type="url"
-                      placeholder="https://maps.google.com/?q=..."
-                      value={mapLocationUrl}
-                      onChange={(e) => setMapLocationUrl(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#1E3A8A] outline-none bg-slate-50/50"
-                    />
+
+                  <div className="space-y-2.5">
+                    {/* Live Location Fetch Button */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleGetLiveLocation}
+                        disabled={isLocating}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 border transition-all shadow-xs ${
+                          locationCaptured
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                            : 'bg-blue-50 text-[#1E3A8A] border-blue-200 hover:bg-blue-100'
+                        }`}
+                      >
+                        {isLocating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-[#1E3A8A]" />
+                            <span>Detecting Live GPS Location...</span>
+                          </>
+                        ) : locationCaptured ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>GPS Location Captured!</span>
+                          </>
+                        ) : (
+                          <>
+                            <LocateFixed className="w-4 h-4 text-[#1E3A8A]" />
+                            <span>📍 Get My Live Location</span>
+                          </>
+                        )}
+                      </button>
+
+                      {locationCaptured && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMapLocationUrl('');
+                            setLocationCaptured(false);
+                          }}
+                          className="text-[11px] text-slate-500 hover:text-red-600 underline font-medium"
+                        >
+                          Reset Location
+                        </button>
+                      )}
+                    </div>
+
+                    {locationError && (
+                      <p className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 font-medium">
+                        ⚠️ {locationError}
+                      </p>
+                    )}
+
+                    {/* Manual Address or Link Input */}
+                    <div className="relative">
+                      <Compass className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                      <input
+                        type="text"
+                        placeholder={locationCaptured ? "GPS Link Attached (or edit site address manually)" : "Type site address / landmark (e.g., Ceramic Aladi Road) or paste GPS link"}
+                        value={mapLocationUrl}
+                        onChange={(e) => {
+                          setMapLocationUrl(e.target.value);
+                          if (!e.target.value) setLocationCaptured(false);
+                        }}
+                        className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#1E3A8A] outline-none bg-slate-50/50"
+                      />
+                    </div>
                   </div>
                 </div>
 

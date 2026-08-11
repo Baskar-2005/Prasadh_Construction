@@ -74,7 +74,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ isOpen
                 Executive Profile & Engineering Credentials
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mt-1 font-normal">
-                Prasadh Construction Company & Consultant is a leading engineering consultancy and turnkey building execution firm headquartered at 140/2A, Velan Nagar, Aladi Road, Virudhachalam. Founded and headed by Er. V. Prasadh (M.E. Structural Engineering), the company combines structural load simulation with modern architectural aesthetics.
+                {COMPANY_INFO.name} is a leading engineering consultancy and turnkey building execution firm headquartered at {COMPANY_INFO.address}. Founded and headed by {COMPANY_INFO.founder}, the company combines structural load simulation with modern architectural aesthetics.
               </p>
             </div>
 
@@ -134,8 +134,10 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ isOpen
             {/* Official Contact Footnote */}
             <div className="pt-4 border-t border-slate-200 text-xs text-slate-600 space-y-1">
               <p className="font-bold text-[#0F172A]">{COMPANY_INFO.name}</p>
-              <p>📍 {COMPANY_INFO.address}</p>
-              <p>📞 Phone: {COMPANY_INFO.phone} | ✉️ {COMPANY_INFO.email}</p>
+              <p>📍 <strong>Main Office:</strong> {COMPANY_INFO.address}</p>
+              {COMPANY_INFO.branchAddress && <p>📍 <strong>Branch Office:</strong> {COMPANY_INFO.branchAddress}</p>}
+              <p>📞 Phone: {COMPANY_INFO.phone} {COMPANY_INFO.secondaryPhone && `| Alt: ${COMPANY_INFO.secondaryPhone}`} | ✉️ {COMPANY_INFO.email}</p>
+              {COMPANY_INFO.gstin && <p className="font-mono text-[11px] text-slate-500">GSTIN: {COMPANY_INFO.gstin}</p>}
             </div>
 
           </div>

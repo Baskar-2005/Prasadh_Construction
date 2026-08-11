@@ -35,9 +35,11 @@ export interface CompanyInfoType {
   founder: string;
   tagline: string;
   address: string;
+  branchAddress?: string;
   phone: string;
   secondaryPhone: string;
   email: string;
+  gstin?: string;
   whatsapp: string;
   hours: string;
   experienceYears: string;
@@ -420,7 +422,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // 8. Company Info
     const unsubCompanyInfo = onSnapshot(doc(db, 'settings', 'company_info'), (docSnap) => {
       if (docSnap.exists()) {
-        setCompanyInfo(docSnap.data() as CompanyInfoType);
+        setCompanyInfo({ ...DEFAULT_COMPANY_INFO, ...docSnap.data() } as CompanyInfoType);
       } else {
         setDoc(doc(db, 'settings', 'company_info'), DEFAULT_COMPANY_INFO).catch((err) => console.error(err));
         setCompanyInfo(DEFAULT_COMPANY_INFO);

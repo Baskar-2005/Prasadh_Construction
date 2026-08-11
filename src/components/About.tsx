@@ -122,30 +122,16 @@ export const About: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-transparent to-transparent flex items-end p-6">
                   <div className="text-white">
                     <p className="text-amber-400 font-bold text-xs uppercase tracking-widest">
-                      Founder & Chief Structural Consultant
+                      Founder
                     </p>
                     <h3 className="text-2xl font-bold font-display mt-0.5">
                       {COMPANY_INFO.founder}
                     </h3>
-                    <p className="text-xs text-slate-300 mt-1">
-                      M.E. Structural Engineering • Registered Engineer
-                    </p>
+                    
                   </div>
                 </div>
               </div>
 
-              {/* Floating Credentials Pill */}
-              <div className="absolute -bottom-6 -right-2 sm:-right-6 glass-panel p-4 rounded-2xl shadow-xl max-w-xs border border-white hidden sm:block">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-amber-100 text-amber-800 rounded-xl">
-                    <Award className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">100% Quality Audited</p>
-                    <p className="text-[11px] text-slate-500">Every project supervised by Er. Prasadh directly.</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="lg:col-span-6 space-y-6">

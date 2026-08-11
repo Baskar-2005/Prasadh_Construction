@@ -95,17 +95,30 @@ export const Footer: React.FC = () => {
           {/* Col 4: Address & Contact */}
           <div className="lg:col-span-3 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 font-display">
-              Virudhachalam Office
+              Office Locations & Contact
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              📍 {companyInfo.address}
+              📍 <strong>Main:</strong> {companyInfo.address}
             </p>
+            {companyInfo.branchAddress && (
+              <p className="text-xs text-slate-300 leading-relaxed">
+                📍 <strong>Branch:</strong> {companyInfo.branchAddress}
+              </p>
+            )}
             <p className="text-xs text-slate-300">
               📞 <a href={`tel:${companyInfo.phone}`} className="hover:text-amber-300 font-semibold">{companyInfo.phone}</a>
+              {companyInfo.secondaryPhone && (
+                <span className="block text-slate-400 text-[11px] mt-0.5">Secondary: {companyInfo.secondaryPhone}</span>
+              )}
             </p>
             <p className="text-xs text-slate-300 truncate">
               ✉️ <a href={`mailto:${companyInfo.email}`} className="hover:text-amber-300">{companyInfo.email}</a>
             </p>
+            {companyInfo.gstin && (
+              <p className="text-[11px] text-amber-300 font-mono">
+                GSTIN: {companyInfo.gstin}
+              </p>
+            )}
             <p className="text-[11px] text-slate-400 mt-2">
               ⏰ {companyInfo.hours}
             </p>

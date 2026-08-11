@@ -91,7 +91,7 @@ export const Hero: React.FC<HeroProps> = ({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
             </span>
             <span className="text-xs font-bold text-slate-100 tracking-wide truncate">
-              Registered Structural Consultancy • <span className="shiny-text-gold">Er. V. Prasadh M.E.</span>
+              Registered Structural Consultancy • <span className="shiny-text-gold">Er. S. Vishnu Prasadh</span>
             </span>
           </motion.div>
         </div>
@@ -171,10 +171,7 @@ export const Hero: React.FC<HeroProps> = ({
               <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
               <span>10-Year Structural Guarantee</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>DTCP & Panchayat Approval</span>
-            </div>
+            
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-amber-300 shrink-0" />
               <span>Itemized BOQ Pricing</span>

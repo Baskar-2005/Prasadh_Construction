@@ -151,7 +151,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
           <div>
             <h1 className="text-sm sm:text-base font-extrabold font-display text-slate-900 flex items-center gap-2">
-              Prasadh Construction Admin CMS
+              Vishnu Prasadh Construction Admin CMS
               <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-mono font-bold uppercase tracking-wider hidden sm:inline-flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-500" />
                 Live Dynamic
@@ -214,7 +214,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             <img src={prasadhLogoEmblem} alt="Logo" className="w-7 h-7 rounded-lg object-cover" />
             <div>
               <p className="text-xs font-bold text-white leading-tight">Admin Console</p>
-              <p className="text-[10px] text-amber-400 font-medium">Er. V. Prasadh M.E.</p>
+              <p className="text-[10px] text-amber-400 font-medium">Er. S. Vishnu Prasadh</p>
             </div>
           </div>
 
@@ -588,7 +588,7 @@ const OverviewTab: React.FC<{
               Virudhachalam Civil & Structural Engineering Portal
             </span>
             <h2 className="text-xl sm:text-2xl font-black font-display text-white">
-              Welcome back, Er. V. Prasadh
+              Welcome back, Er. S. Vishnu Prasadh
             </h2>
             <p className="text-xs text-slate-300 mt-1">
               Control your live portfolio, rates, client consultation leads, and site information in real-time.
@@ -964,7 +964,7 @@ const LeadsTab: React.FC<{
                     <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
                       <a
                         href={`https://wa.me/${cms.companyInfo.whatsapp}?text=${encodeURIComponent(
-                          `Hello ${lead.name}, Er. V. Prasadh here from Prasadh Construction. Regarding your request for ${lead.serviceRequested}...`
+                          `Hello ${lead.name}, Er. S. Vishnu Prasadh here from Prasadh Construction. Regarding your request for ${lead.serviceRequested}...`
                         )}`}
                         target="_blank"
                         rel="noreferrer"
@@ -1809,6 +1809,27 @@ const SettingsTab: React.FC<{
           </div>
 
           <div>
+            <label className="block font-bold text-slate-700 mb-1">Secondary Phone</label>
+            <input
+              type="text"
+              value={info.secondaryPhone || ''}
+              onChange={(e) => setInfo({ ...info, secondaryPhone: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Email Address</label>
+            <input
+              type="email"
+              value={info.email || ''}
+              onChange={(e) => setInfo({ ...info, email: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
+          </div>
+
+          <div>
             <label className="block font-bold text-slate-700 mb-1">WhatsApp Number</label>
             <input
               type="text"
@@ -1819,14 +1840,44 @@ const SettingsTab: React.FC<{
             />
           </div>
 
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">GSTIN</label>
+            <input
+              type="text"
+              value={info.gstin || ''}
+              onChange={(e) => setInfo({ ...info, gstin: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500 font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Business Hours</label>
+            <input
+              type="text"
+              value={info.hours || ''}
+              onChange={(e) => setInfo({ ...info, hours: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+            />
+          </div>
+
           <div className="sm:col-span-2">
-            <label className="block font-bold text-slate-700 mb-1">Office Address</label>
+            <label className="block font-bold text-slate-700 mb-1">Main Office Address (Virudhachalam)</label>
             <input
               type="text"
               value={info.address}
               onChange={(e) => setInfo({ ...info, address: e.target.value })}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
               required
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block font-bold text-slate-700 mb-1">Branch Office Address (Villupuram)</label>
+            <input
+              type="text"
+              value={info.branchAddress || ''}
+              onChange={(e) => setInfo({ ...info, branchAddress: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
             />
           </div>
 
