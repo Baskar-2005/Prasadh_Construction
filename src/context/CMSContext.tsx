@@ -3,14 +3,18 @@ import {
   Project,
   ServiceItem,
   Testimonial,
-  FAQItem
+  FAQItem,
+  BeforeAfterProject,
+  MaterialBrand
 } from '../types';
 import {
   COMPANY_INFO as DEFAULT_COMPANY_INFO,
   PROJECTS as DEFAULT_PROJECTS,
   SERVICES as DEFAULT_SERVICES,
   TESTIMONIALS as DEFAULT_TESTIMONIALS,
-  FAQS as DEFAULT_FAQS
+  FAQS as DEFAULT_FAQS,
+  DEFAULT_BEFORE_AFTER_PROJECTS,
+  MATERIAL_BRANDS as DEFAULT_MATERIAL_BRANDS
 } from '../data/mockData';
 import { AdminLoginModal } from '../components/admin/AdminLoginModal';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
@@ -135,6 +139,8 @@ interface CMSContextType {
   faqs: FAQItem[];
   estimatorRates: EstimatorRates;
   leads: ClientLead[];
+  beforeAfterProjects: BeforeAfterProject[];
+  materials: MaterialBrand[];
   adminPin: string;
   isAuthenticated: boolean;
   toast: ToastNotification | null;
@@ -162,6 +168,16 @@ interface CMSContextType {
   addProject: (project: Omit<Project, 'id'>) => void;
   updateProject: (id: string, project: Partial<Project>) => void;
   deleteProject: (id: string) => void;
+
+  // Before & After Projects CRUD
+  addBeforeAfterProject: (item: Omit<BeforeAfterProject, 'id'>) => void;
+  updateBeforeAfterProject: (id: string, item: Partial<BeforeAfterProject>) => void;
+  deleteBeforeAfterProject: (id: string) => void;
+
+  // Materials CRUD
+  addMaterial: (item: Omit<MaterialBrand, 'id'>) => void;
+  updateMaterial: (id: string, item: Partial<MaterialBrand>) => void;
+  deleteMaterial: (id: string) => void;
 
   // Services CRUD
   addService: (service: Omit<ServiceItemWithVisibility, 'id'>) => void;
@@ -203,6 +219,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [faqs, setFaqs] = useState<FAQItem[]>(DEFAULT_FAQS);
   const [estimatorRates, setEstimatorRates] = useState<EstimatorRates>(DEFAULT_ESTIMATOR_RATES);
   const [leads, setLeads] = useState<ClientLead[]>(DEFAULT_LEADS);
+  const [beforeAfterProjects, setBeforeAfterProjects] = useState<BeforeAfterProject[]>(DEFAULT_BEFORE_AFTER_PROJECTS);
+  const [materials, setMaterials] = useState<MaterialBrand[]>(DEFAULT_MATERIAL_BRANDS);
   const [adminPin, setAdminPin] = useState<string>(DEFAULT_PIN);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [toast, setToast] = useState<ToastNotification | null>(null);
@@ -363,7 +381,43 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }, (err) => console.error('Leads firestore error:', err));
 
-    // 6. Company Info
+    // 6. Before & After Projects
+    const unsubBeforeAfter = onSnapshot(collection(db, 'before_after'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_BEFORE_AFTER_PROJECTS.forEach((ba) => {
+          batch.set(doc(db, 'before_after', ba.id), ba);
+        });
+        batch.commit().catch((err) => console.error('Error seeding before_after:', err));
+        setBeforeAfterProjects(DEFAULT_BEFORE_AFTER_PROJECTS);
+      } else {
+        const list: BeforeAfterProject[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as BeforeAfterProject);
+        });
+        setBeforeAfterProjects(list);
+      }
+    }, (err) => console.error('BeforeAfter firestore error:', err));
+
+    // 7. Materials
+    const unsubMaterials = onSnapshot(collection(db, 'materials'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_MATERIAL_BRANDS.forEach((m) => {
+          batch.set(doc(db, 'materials', m.id), m);
+        });
+        batch.commit().catch((err) => console.error('Error seeding materials:', err));
+        setMaterials(DEFAULT_MATERIAL_BRANDS);
+      } else {
+        const list: MaterialBrand[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as MaterialBrand);
+        });
+        setMaterials(list);
+      }
+    }, (err) => console.error('Materials firestore error:', err));
+
+    // 8. Company Info
     const unsubCompanyInfo = onSnapshot(doc(db, 'settings', 'company_info'), (docSnap) => {
       if (docSnap.exists()) {
         setCompanyInfo(docSnap.data() as CompanyInfoType);
@@ -373,7 +427,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }, (err) => console.error('Company info firestore error:', err));
 
-    // 7. Estimator Rates
+    // 9. Estimator Rates
     const unsubEstimatorRates = onSnapshot(doc(db, 'settings', 'estimator_rates'), (docSnap) => {
       if (docSnap.exists()) {
         setEstimatorRates(docSnap.data() as EstimatorRates);
@@ -383,7 +437,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }, (err) => console.error('Estimator rates firestore error:', err));
 
-    // 8. Admin Settings
+    // 10. Admin Settings
     const unsubAdmin = onSnapshot(doc(db, 'settings', 'admin_pin'), (docSnap) => {
       if (docSnap.exists() && docSnap.data()?.adminPin) {
         setAdminPin(docSnap.data().adminPin);
@@ -402,6 +456,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubTestimonials();
       unsubFaqs();
       unsubLeads();
+      unsubBeforeAfter();
+      unsubMaterials();
       unsubCompanyInfo();
       unsubEstimatorRates();
       unsubAdmin();
@@ -518,6 +574,48 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const projToDelete = projects.find((p) => p.id === id);
     deleteDoc(doc(db, 'projects', id)).catch((err) => console.error(err));
     showToast(`Deleted project "${projToDelete?.title || id}" from Cloud Database`, 'info');
+  };
+
+  // Before & After Projects CRUD
+  const addBeforeAfterProject = (item: Omit<BeforeAfterProject, 'id'>) => {
+    const id = `ba-${Date.now()}`;
+    const newItem: BeforeAfterProject = { ...item, id };
+    setDoc(doc(db, 'before_after', id), newItem).catch((err) => console.error(err));
+    showToast(`Before & After project "${item.title}" saved to Cloud Database!`);
+  };
+
+  const updateBeforeAfterProject = (id: string, itemFields: Partial<BeforeAfterProject>) => {
+    const existing = beforeAfterProjects.find((b) => b.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...itemFields };
+    setDoc(doc(db, 'before_after', id), updated).catch((err) => console.error(err));
+    showToast('Before & After project updated');
+  };
+
+  const deleteBeforeAfterProject = (id: string) => {
+    deleteDoc(doc(db, 'before_after', id)).catch((err) => console.error(err));
+    showToast('Before & After project removed', 'info');
+  };
+
+  // Materials CRUD
+  const addMaterial = (mat: Omit<MaterialBrand, 'id'>) => {
+    const id = `mat-${Date.now()}`;
+    const newMat: MaterialBrand = { ...mat, id };
+    setDoc(doc(db, 'materials', id), newMat).catch((err) => console.error(err));
+    showToast(`Material "${mat.brandName}" saved to Cloud Database`);
+  };
+
+  const updateMaterial = (id: string, matFields: Partial<MaterialBrand>) => {
+    const existing = materials.find((m) => m.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...matFields };
+    setDoc(doc(db, 'materials', id), updated).catch((err) => console.error(err));
+    showToast('Material detail updated');
+  };
+
+  const deleteMaterial = (id: string) => {
+    deleteDoc(doc(db, 'materials', id)).catch((err) => console.error(err));
+    showToast('Material item removed', 'info');
   };
 
   // Services CRUD
@@ -683,6 +781,8 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         faqs,
         estimatorRates,
         leads,
+        beforeAfterProjects,
+        materials,
         adminPin,
         isAuthenticated,
         toast,
@@ -702,6 +802,12 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProject,
         updateProject,
         deleteProject,
+        addBeforeAfterProject,
+        updateBeforeAfterProject,
+        deleteBeforeAfterProject,
+        addMaterial,
+        updateMaterial,
+        deleteMaterial,
         addService,
         updateService,
         deleteService,

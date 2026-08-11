@@ -46,14 +46,14 @@ import {
   Images
 } from 'lucide-react';
 import { useCMS, ServiceItemWithVisibility, ClientLead } from '../../context/CMSContext';
-import { Project, Testimonial, FAQItem } from '../../types';
+import { Project, Testimonial, FAQItem, BeforeAfterProject, MaterialBrand } from '../../types';
 import prasadhLogoEmblem from '../../assets/images/prasadh_logo_emblem_1786205642641.jpg';
 
 interface AdminDashboardProps {
   onClose: () => void;
 }
 
-type TabType = 'overview' | 'leads' | 'projects' | 'services' | 'pricing' | 'testimonials' | 'faqs' | 'settings' | 'backup';
+type TabType = 'overview' | 'leads' | 'projects' | 'before_after' | 'materials' | 'services' | 'pricing' | 'testimonials' | 'faqs' | 'settings' | 'backup';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const cms = useCMS();
@@ -63,6 +63,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   // Modal states for CRUD operations
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isAddingProject, setIsAddingProject] = useState(false);
+
+  const [editingBeforeAfter, setEditingBeforeAfter] = useState<any | null>(null);
+  const [isAddingBeforeAfter, setIsAddingBeforeAfter] = useState(false);
+
+  const [editingMaterial, setEditingMaterial] = useState<any | null>(null);
+  const [isAddingMaterial, setIsAddingMaterial] = useState(false);
 
   const [editingService, setEditingService] = useState<ServiceItemWithVisibility | null>(null);
   const [isAddingService, setIsAddingService] = useState(false);
@@ -233,6 +239,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               onClick={() => setActiveTab('projects')}
             />
             <SidebarButton
+              icon={<Camera className="w-4 h-4" />}
+              label={`Before & After (${cms.beforeAfterProjects?.length || 0})`}
+              active={activeTab === 'before_after'}
+              onClick={() => setActiveTab('before_after')}
+            />
+            <SidebarButton
+              icon={<Layers className="w-4 h-4" />}
+              label={`Material Brands (${cms.materials?.length || 0})`}
+              active={activeTab === 'materials'}
+              onClick={() => setActiveTab('materials')}
+            />
+            <SidebarButton
               icon={<Briefcase className="w-4 h-4" />}
               label={`Services (${cms.services.length})`}
               active={activeTab === 'services'}
@@ -306,6 +324,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               onAddProject={() => setIsAddingProject(true)}
               onEditProject={(p) => setEditingProject(p)}
               handleImageUpload={handleImageUpload}
+            />
+          )}
+
+          {activeTab === 'before_after' && (
+            <BeforeAfterTab
+              cms={cms}
+              globalSearch={globalSearch}
+              onAddBeforeAfter={() => setIsAddingBeforeAfter(true)}
+              onEditBeforeAfter={(item) => setEditingBeforeAfter(item)}
+            />
+          )}
+
+          {activeTab === 'materials' && (
+            <MaterialsTab
+              cms={cms}
+              globalSearch={globalSearch}
+              onAddMaterial={() => setIsAddingMaterial(true)}
+              onEditMaterial={(mat) => setEditingMaterial(mat)}
             />
           )}
 
@@ -448,6 +484,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             }
             setIsAddingFAQ(false);
             setEditingFAQ(null);
+          }}
+        />
+      )}
+
+      {/* 6. BEFORE & AFTER FORM MODAL */}
+      {(isAddingBeforeAfter || editingBeforeAfter) && (
+        <BeforeAfterFormModal
+          item={editingBeforeAfter}
+          onClose={() => {
+            setIsAddingBeforeAfter(false);
+            setEditingBeforeAfter(null);
+          }}
+          onSave={(data) => {
+            if (editingBeforeAfter) {
+              cms.updateBeforeAfterProject(editingBeforeAfter.id, data);
+            } else {
+              cms.addBeforeAfterProject(data);
+            }
+            setIsAddingBeforeAfter(false);
+            setEditingBeforeAfter(null);
+          }}
+          handleImageUpload={handleImageUpload}
+        />
+      )}
+
+      {/* 7. MATERIAL FORM MODAL */}
+      {(isAddingMaterial || editingMaterial) && (
+        <MaterialFormModal
+          material={editingMaterial}
+          onClose={() => {
+            setIsAddingMaterial(false);
+            setEditingMaterial(null);
+          }}
+          onSave={(data) => {
+            if (editingMaterial) {
+              cms.updateMaterial(editingMaterial.id, data);
+            } else {
+              cms.addMaterial(data);
+            }
+            setIsAddingMaterial(false);
+            setEditingMaterial(null);
           }}
         />
       )}
@@ -1059,6 +1136,196 @@ const ProjectsTab: React.FC<{
           </div>
         );
       })}
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 3.5 BEFORE & AFTER TAB
+// ==========================================
+const BeforeAfterTab: React.FC<{
+  cms: ReturnType<typeof useCMS>;
+  globalSearch: string;
+  onAddBeforeAfter: () => void;
+  onEditBeforeAfter: (item: BeforeAfterProject) => void;
+}> = ({ cms, globalSearch, onAddBeforeAfter, onEditBeforeAfter }) => {
+  const filtered = useMemo(() => {
+    let list = cms.beforeAfterProjects || [];
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter(
+        (ba) =>
+          ba.title.toLowerCase().includes(q) ||
+          ba.location.toLowerCase().includes(q) ||
+          ba.category.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [cms.beforeAfterProjects, globalSearch]);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-amber-500" />
+            Before & After Transformation Projects ({cms.beforeAfterProjects?.length || 0})
+          </h2>
+          <p className="text-xs text-slate-500">Manage interactive site comparison slider content</p>
+        </div>
+
+        <button
+          onClick={onAddBeforeAfter}
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Before & After Item</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {filtered.map((ba) => (
+          <div key={ba.id} className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 uppercase">
+                {ba.category}
+              </span>
+              <span className="text-xs text-slate-500 font-semibold">{ba.duration}</span>
+            </div>
+
+            <h3 className="font-bold text-slate-900 text-sm">{ba.title}</h3>
+            <p className="text-xs text-slate-500 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              {ba.location}
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 my-2">
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 h-32">
+                <img src={ba.beforeImage} alt="Before" className="w-full h-full object-cover" />
+                <span className="absolute bottom-1 left-1 px-2 py-0.5 bg-black/80 text-white font-bold text-[9px] rounded">
+                  BEFORE
+                </span>
+              </div>
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 h-32">
+                <img src={ba.afterImage} alt="After" className="w-full h-full object-cover" />
+                <span className="absolute bottom-1 right-1 px-2 py-0.5 bg-amber-500 text-slate-950 font-bold text-[9px] rounded">
+                  AFTER
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 line-clamp-2">{ba.description}</p>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => onEditBeforeAfter(ba)}
+                className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-semibold cursor-pointer flex items-center gap-1"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                <span>Edit</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (window.confirm(`Delete Before & After project "${ba.title}"?`)) {
+                    cms.deleteBeforeAfterProject(ba.id);
+                  }
+                }}
+                className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
+// 3.6 MATERIAL BRANDS TAB
+// ==========================================
+const MaterialsTab: React.FC<{
+  cms: ReturnType<typeof useCMS>;
+  globalSearch: string;
+  onAddMaterial: () => void;
+  onEditMaterial: (mat: MaterialBrand) => void;
+}> = ({ cms, globalSearch, onAddMaterial, onEditMaterial }) => {
+  const filtered = useMemo(() => {
+    let list = cms.materials || [];
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.brandName.toLowerCase().includes(q) ||
+          m.category.toLowerCase().includes(q) ||
+          m.benefit.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [cms.materials, globalSearch]);
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <Layers className="w-5 h-5 text-amber-500" />
+            Approved Construction Material Brands ({cms.materials?.length || 0})
+          </h2>
+          <p className="text-xs text-slate-500">Manage high-grade material specifications shown on site</p>
+        </div>
+
+        <button
+          onClick={onAddMaterial}
+          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Material Brand</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filtered.map((mat) => (
+          <div key={mat.id} className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3 flex flex-col justify-between">
+            <div>
+              <span className="text-[10px] font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 uppercase">
+                {mat.category}
+              </span>
+
+              <h3 className="font-extrabold text-slate-900 text-sm mt-2">{mat.brandName}</h3>
+              <p className="text-xs text-amber-700 font-semibold mt-0.5">{mat.grade}</p>
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">{mat.benefit}</p>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-3">
+              <span className="text-[10px] font-mono text-slate-400 font-bold uppercase">{mat.logoText}</span>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => onEditMaterial(mat)}
+                  className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-semibold cursor-pointer flex items-center gap-1"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>Edit</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Delete material "${mat.brandName}"?`)) {
+                      cms.deleteMaterial(mat.id);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -2547,6 +2814,258 @@ const FAQFormModal: React.FC<{
             className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-2"
           >
             Save FAQ
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// 6. BEFORE & AFTER FORM MODAL
+const BeforeAfterFormModal: React.FC<{
+  item: BeforeAfterProject | null;
+  onClose: () => void;
+  onSave: (data: Omit<BeforeAfterProject, 'id'>) => void;
+  handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
+}> = ({ item, onClose, onSave, handleImageUpload }) => {
+  const [formData, setFormData] = useState<Omit<BeforeAfterProject, 'id'>>({
+    title: item?.title || '',
+    location: item?.location || 'Virudhachalam',
+    category: item?.category || 'New Construction',
+    beforeImage: item?.beforeImage || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=1200&q=80',
+    afterImage: item?.afterImage || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+    description: item?.description || '',
+    duration: item?.duration || '6 Months Execution'
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-xl w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="text-base font-bold font-display">{item ? 'Edit Before & After Project' : 'Add Before & After Project'}</h3>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Project Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Category</label>
+              <input
+                type="text"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Duration / Timeline</label>
+              <input
+                type="text"
+                value={formData.duration}
+                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Location</label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Before Image URL</label>
+              <input
+                type="text"
+                value={formData.beforeImage}
+                onChange={(e) => setFormData({ ...formData, beforeImage: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-[10px] text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+              <label className="mt-1 block px-2 py-1 bg-slate-100 hover:bg-slate-200 text-[#1E3A8A] font-bold text-[10px] rounded text-center cursor-pointer">
+                Upload Before Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      handleImageUpload(e.target.files[0], (url) => setFormData((prev) => ({ ...prev, beforeImage: url })));
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">After Image URL</label>
+              <input
+                type="text"
+                value={formData.afterImage}
+                onChange={(e) => setFormData({ ...formData, afterImage: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-[10px] text-slate-900 focus:bg-white focus:border-amber-500"
+                required
+              />
+              <label className="mt-1 block px-2 py-1 bg-slate-100 hover:bg-slate-200 text-[#1E3A8A] font-bold text-[10px] rounded text-center cursor-pointer">
+                Upload After Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      handleImageUpload(e.target.files[0], (url) => setFormData((prev) => ({ ...prev, afterImage: url })));
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Transformation Details & Scope</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-2"
+          >
+            Save Before & After Project
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// 7. MATERIAL FORM MODAL
+const MaterialFormModal: React.FC<{
+  material: MaterialBrand | null;
+  onClose: () => void;
+  onSave: (data: Omit<MaterialBrand, 'id'>) => void;
+}> = ({ material, onClose, onSave }) => {
+  const [formData, setFormData] = useState<Omit<MaterialBrand, 'id'>>({
+    category: material?.category || 'Steel & Rebar',
+    brandName: material?.brandName || '',
+    grade: material?.grade || '',
+    benefit: material?.benefit || '',
+    logoText: material?.logoText || ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-white border border-slate-200 max-w-md w-full rounded-3xl p-6 space-y-4 text-slate-900 my-auto shadow-2xl">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 className="text-base font-bold font-display">{material ? 'Edit Material Brand' : 'Add Material Brand'}</h3>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 cursor-pointer">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Category</label>
+            <input
+              type="text"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              placeholder="e.g. Structural Steel, Cement Matrix"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Brand Name</label>
+            <input
+              type="text"
+              value={formData.brandName}
+              onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:bg-white focus:border-amber-500"
+              placeholder="e.g. Tata Tiscon Fe550D"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Grade / Technical Specification</label>
+            <input
+              type="text"
+              value={formData.grade}
+              onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              placeholder="e.g. Fe550D Super Ductile, 53 Grade Equivalent"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Benefit Description</label>
+            <textarea
+              value={formData.benefit}
+              onChange={(e) => setFormData({ ...formData, benefit: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:bg-white focus:border-amber-500"
+              placeholder="e.g. High ductility & earthquake resistance"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Badge / Logo Text Tag</label>
+            <input
+              type="text"
+              value={formData.logoText}
+              onChange={(e) => setFormData({ ...formData, logoText: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-900 focus:bg-white focus:border-amber-500"
+              placeholder="e.g. TATA TISCON"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer mt-2"
+          >
+            Save Material Brand
           </button>
         </form>
       </div>

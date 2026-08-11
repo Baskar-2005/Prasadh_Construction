@@ -61,11 +61,23 @@ export interface ComparisonMetric {
 }
 
 export interface MaterialBrand {
+  id: string;
   category: string;
   brandName: string;
   grade: string;
   benefit: string;
   logoText: string;
+}
+
+export interface BeforeAfterProject {
+  id: string;
+  title: string;
+  location: string;
+  category: string;
+  beforeImage: string;
+  afterImage: string;
+  description: string;
+  duration?: string;
 }
 
 export interface FAQItem {

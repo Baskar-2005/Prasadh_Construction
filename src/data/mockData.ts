@@ -14,12 +14,14 @@ import engineeringDeskImage from '../assets/images/engineering_desk_178611739468
 
 export const COMPANY_INFO = {
   name: "Prasadh Construction Company & Consultant",
-  founder: "Er. V. Prasadh, M.E. (Structural Engg.)",
+  founder: "Er. S.Vishnu Prasadh",
   tagline: "Building Strong Foundations For Better Living.",
-  address: "140/2A, Velan Nagar, Aladi Road, Virudhachalam, Tamil Nadu 606001",
-  phone: "+91 80566 58861",
-  secondaryPhone: "+91 98424 58861",
-  email: "vishnuprasadh1996@gmail.com",
+  address: "160/A3, Ceramic Aladi Road, Virudhachalam - 606001",
+  branchAddress: "3/298, Valliamman Kovil Street, Mundiyampakkam, Villupuram - 605601",
+  phone: "+91 8056658861",
+  secondaryPhone: "+91 8110818861",
+  email: "vishnuprasath1996@gmail.com",
+  gstin: "33BBQPV8951F1Z0",
   whatsapp: "918056658861",
   hours: "Monday - Saturday: 9:00 AM - 6:30 PM",
   experienceYears: "10+",
@@ -227,13 +229,13 @@ export const COMPARISON_METRICS: ComparisonMetric[] = [
   {
     feature: "Quality Standards",
     others: "Average site labor quality without technical testing.",
-    prasadh: "Strict M.E. Structural Engineering oversight & 30-point quality audit.",
+    prasadh: "Strict Engineering oversight & 30-point quality audit.",
     isHighlight: true
   },
   {
     feature: "Planning & Design",
     others: "Basic unverified hand sketches or generic template layouts.",
-    prasadh: "Custom 3D Architectural Renders, ETABS Analysis & Vaastu Compliance.",
+    prasadh: "Custom 3D Architectural Renders, Load Analysis & Vaastu Compliance.",
     isHighlight: false
   },
   {
@@ -263,13 +265,13 @@ export const COMPARISON_METRICS: ComparisonMetric[] = [
   {
     feature: "Safety & Engineering",
     others: "Basic traditional practices without seismic or soil testing.",
-    prasadh: "Soil test based foundation, seismic code compliance & structural certification.",
+    prasadh: "Soil test based foundation, seismic code compliance & engineering certification.",
     isHighlight: true
   },
   {
     feature: "After-Handover Support",
     others: "Zero support once final payment is collected.",
-    prasadh: "10-Year Structural Guarantee & 1-Year Free Maintenance Warranty.",
+    prasadh: "6 Month Warranty.",
     isHighlight: false
   }
 ];
@@ -340,16 +342,16 @@ export const PROCESS_STEPS: ProcessStep[] = [
     stepNumber: "03",
     title: "Design",
     subtitle: "2D Floorplans & 3D Renders",
-    description: "Crafting custom architectural floor plans, 3D exterior elevations, structural engineering drawings, and Vaastu layout.",
-    deliverable: "Full Architectural & Structural Drawing Set",
+    description: "Crafting custom architectural floor plans, 3D exterior elevations, engineering drawings, and Vaastu layout.",
+    deliverable: "Full Architectural & Engineering Drawing Set",
     iconName: "DraftingCompass"
   },
   {
     stepNumber: "04",
     title: "Approval",
     subtitle: "Government Sanctions",
-    description: "Drafting official blue-prints and securing fast approvals from DTCP, Panchayat, or Municipal Authorities.",
-    deliverable: "Official Government Building Permit",
+    description: "Drafting official blue-prints and securing fast approvals from Municipal & Local Planning Authorities.",
+    deliverable: "Official Building Approval Permit",
     iconName: "ShieldCheck"
   },
   {
@@ -372,7 +374,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
     stepNumber: "07",
     title: "Quality Inspection",
     subtitle: "30-Point Audit & Finishing",
-    description: "Rigorous structural checks, tile leveling tests, plumbing pressure testing, paint texture inspection, and electrical load check.",
+    description: "Rigorous quality checks, tile leveling tests, plumbing pressure testing, paint texture inspection, and electrical load check.",
     deliverable: "Certified Quality Completion Audit",
     iconName: "ClipboardCheck"
   },
@@ -380,8 +382,8 @@ export const PROCESS_STEPS: ProcessStep[] = [
     stepNumber: "08",
     title: "Handover",
     subtitle: "Keys & Warranty",
-    description: "Formal key-handover ceremony with structural guarantee certificate, as-built drawing binder, and maintenance guidelines.",
-    deliverable: "Keys, Warranty Certificate & As-Built Plans",
+    description: "Formal key-handover ceremony with 6 month warranty certificate, as-built drawing binder, and maintenance guidelines.",
+    deliverable: "Keys, 6 Month Warranty Certificate & As-Built Plans",
     iconName: "Sparkles"
   }
 ];
@@ -394,7 +396,7 @@ export const TESTIMONIALS: Testimonial[] = [
     projectType: "4,200 Sq. Ft. Luxury Villa",
     rating: 5,
     date: "2 months ago",
-    comment: "Prasadh Construction built our dream home in Velan Nagar exactly as imagined. Er. Prasadh's structural engineering background meant we never had to worry about material quality or foundation safety. Delivered 2 weeks ahead of schedule!",
+    comment: "Prasadh Construction built our dream home in Velan Nagar exactly as imagined. Er. S.Vishnu Prasadh's engineering guidance meant we never had to worry about material quality or foundation safety. Delivered 2 weeks ahead of schedule!",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
     projectPhoto: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80",
     verified: true
@@ -415,10 +417,10 @@ export const TESTIMONIALS: Testimonial[] = [
     id: "test-3",
     clientName: "Mr. Suresh Balakrishnan",
     location: "Cuddalore Road",
-    projectType: "Structural Consultancy & Turnkey Villa",
+    projectType: "Engineering Consultancy & Turnkey Villa",
     rating: 5,
     date: "6 months ago",
-    comment: "Their structural consultancy saved us nearly 1.5 Lakhs in unnecessary steel while actually increasing the seismic load strength. Highly recommended for anyone seeking engineering excellence!",
+    comment: "Their engineering consultancy saved us nearly 1.5 Lakhs in unnecessary steel while actually increasing the load capacity. Highly recommended for anyone seeking construction excellence!",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80",
     projectPhoto: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80",
     verified: true
@@ -427,13 +429,15 @@ export const TESTIMONIALS: Testimonial[] = [
 
 export const MATERIAL_BRANDS: MaterialBrand[] = [
   {
-    category: "Structural Steel",
+    id: "mat-1",
+    category: "Steel & Rebar",
     brandName: "Tata Tiscon Fe550D SD",
     grade: "Fe550D Super Ductile",
     benefit: "High ductility & earthquake resistance with anti-corrosion rib pattern.",
     logoText: "TATA TISCON"
   },
   {
+    id: "mat-2",
     category: "Cement Matrix",
     brandName: "UltraTech / Ramco Supergrade",
     grade: "PPC 53 Grade Equivalent",
@@ -441,6 +445,7 @@ export const MATERIAL_BRANDS: MaterialBrand[] = [
     logoText: "ULTRATECH CEMENT"
   },
   {
+    id: "mat-3",
     category: "Electrical Systems",
     brandName: "Finolex / Schneider / Anchor",
     grade: "FR-LSH Fire Resistant",
@@ -448,6 +453,7 @@ export const MATERIAL_BRANDS: MaterialBrand[] = [
     logoText: "FINOLEX & ANCHOR"
   },
   {
+    id: "mat-4",
     category: "Plumbing Matrix",
     brandName: "Ashirvad CPVC / Supreme",
     grade: "SDR 11 Lead-Free",
@@ -455,6 +461,7 @@ export const MATERIAL_BRANDS: MaterialBrand[] = [
     logoText: "ASHIRVAD PIPES"
   },
   {
+    id: "mat-5",
     category: "Paint & Exterior",
     brandName: "Asian Paints Apex Ultima",
     grade: "Nano Technology Exterior",
@@ -462,6 +469,7 @@ export const MATERIAL_BRANDS: MaterialBrand[] = [
     logoText: "ASIAN PAINTS"
   },
   {
+    id: "mat-6",
     category: "Wood & Joinery",
     brandName: "First-Quality Teak Wood",
     grade: "Grade A Seasoned Teak",
@@ -470,41 +478,74 @@ export const MATERIAL_BRANDS: MaterialBrand[] = [
   }
 ];
 
+export const DEFAULT_BEFORE_AFTER_PROJECTS = [
+  {
+    id: "ba-1",
+    title: "The Solitaire Villa - Bare Plot to Luxury Residence",
+    location: "Aladi Road, Virudhachalam",
+    category: "New Villa Construction",
+    beforeImage: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=1200&q=80",
+    afterImage: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    description: "Transformation from raw site foundation to a 4,500 sq.ft luxury villa with glass facade and custom elevation.",
+    duration: "7 Months Execution"
+  },
+  {
+    id: "ba-2",
+    title: "Heritage Home Facade & Elevation Upgrade",
+    location: "Ceramic Road, Virudhachalam",
+    category: "Renovation & Facade Modernization",
+    beforeImage: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80",
+    afterImage: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    description: "Complete exterior elevation upgrade of a 20-year-old traditional home into a modern architectural villa.",
+    duration: "2.5 Months Execution"
+  },
+  {
+    id: "ba-3",
+    title: "Commercial Complex Groundwork to Landmark Hub",
+    location: "Mundiyampakkam, Villupuram",
+    category: "Commercial Building",
+    beforeImage: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=1200&q=80",
+    afterImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
+    description: "Conversion of bare plot into a 3-storey G+2 commercial complex with glass curtain wall and parking deck.",
+    duration: "9 Months Execution"
+  }
+];
+
 export const FAQS: FAQItem[] = [
   {
     id: "faq-1",
     category: "construction",
     question: "What sets Prasadh Construction apart from standard local contractors?",
-    answer: "We operate as an engineering consultancy led by Er. V. Prasadh (M.E. Structural Engineering). Every project undergoes 3D structural load modeling, soil bearing test alignment, 30-point quality audits, and guaranteed timeline delivery with 100% itemized pricing transparency."
+    answer: "We operate as an engineering consultancy led by Er. S.Vishnu Prasadh. Every project undergoes 3D load modeling, soil bearing test alignment, 30-point quality audits, and guaranteed timeline delivery with 100% itemized pricing transparency."
   },
   {
     id: "faq-2",
     category: "cost",
     question: "How do you calculate construction costs per square foot in Virudhachalam?",
-    answer: "Our construction packages range from ₹2,050 / sq. ft. (Standard) to ₹2,650+ / sq. ft. (Ultra-Luxury Turnkey). Exact pricing depends on selected floor finishes, teak joinery, sanitary fixtures, and structural requirements. We provide a complete itemized Bill of Quantities (BOQ) with zero price-escalation guarantee."
+    answer: "Our construction packages range from ₹2,050 / sq. ft. (Standard) to ₹2,650+ / sq. ft. (Ultra-Luxury Turnkey). Exact pricing depends on selected floor finishes, teak joinery, sanitary fixtures, and engineering requirements. We provide a complete itemized Bill of Quantities (BOQ) with zero price-escalation guarantee."
   },
   {
     id: "faq-3",
     category: "timeline",
     question: "How long does it take to construct a 2,500 sq. ft. luxury villa?",
-    answer: "A standard 2,500 sq. ft. residence takes approximately 6 to 8 months from ground-breaking to key handover, including foundation curing time, structural slab cycles, plastering, interior woodwork, and final paint."
+    answer: "A standard 2,500 sq. ft. residence takes approximately 6 to 8 months from ground-breaking to key handover, including foundation curing time, slab cycles, plastering, interior woodwork, and final paint."
   },
   {
     id: "faq-4",
     category: "approvals",
-    question: "Do you help with DTCP, Panchayat, and Bank Loan Approvals?",
-    answer: "Yes! We handle the complete documentation workflow including sanction drawings, structural stability certificates, blue-print preparation, and liaison with Virudhachalam Local Planning Authorities and nationalized banks."
+    question: "Do you help with Building Permits and Bank Loan Approvals?",
+    answer: "Yes! We handle the complete documentation workflow including sanction drawings, stability certificates, blue-print preparation, and liaison with Local Municipal & Planning Authorities and nationalized banks."
   },
   {
     id: "faq-5",
     category: "consultancy",
-    question: "Can I hire Prasadh Construction purely for Structural Consultancy if I have my own contractor?",
-    answer: "Absolutely! We offer standalone Structural Design, STAAD.Pro load analysis, Rebar schedule detailing, and third-party site quality inspection services for independent builders and architects."
+    question: "Can I hire Prasadh Construction purely for Engineering Consultancy if I have my own contractor?",
+    answer: "Absolutely! We offer standalone Civil & Architectural Design, load analysis, Rebar schedule detailing, and third-party site quality inspection services for independent builders and architects."
   },
   {
     id: "faq-6",
     category: "warranty",
     question: "What warranty do you offer post-construction?",
-    answer: "We provide an industry-leading 10-Year Structural Integrity Warranty for all foundational and RCC components, alongside a 1-Year Free Maintenance Guarantee covering plumbing, electrical, and sealant touch-ups."
+    answer: "We offer a 6 Month Warranty covering plumbing, electrical fittings, tile alignment, and sealant touch-ups."
   }
 ];

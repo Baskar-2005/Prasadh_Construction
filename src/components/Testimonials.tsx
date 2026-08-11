@@ -80,69 +80,159 @@ export const Testimonials: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* GOOGLE REVIEWS STYLE CARDS GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((rev) => (
+        {/* SMOOTH SCROLLING MARQUEE ROWS */}
+        <div className="space-y-8 overflow-hidden py-4 -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12">
+          
+          {/* ROW 1: Moving Right to Left (0% -> -50%) */}
+          <div className="relative overflow-hidden group">
             <motion.div
-              key={rev.id}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm hover:shadow-xl border border-slate-200/80 transition-all flex flex-col justify-between relative group"
+              className="flex gap-6 w-max cursor-grab active:cursor-grabbing"
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{
+                repeat: Infinity,
+                repeatType: 'loop',
+                duration: Math.max(30, testimonials.length * 8),
+                ease: 'linear'
+              }}
+              whileHover={{ animationPlayState: 'paused' }}
             >
-              <Quote className="absolute top-6 right-6 w-8 h-8 text-slate-100 group-hover:text-blue-100 transition-colors pointer-events-none" />
+              {[...testimonials, ...testimonials, ...testimonials].map((rev, index) => (
+                <div
+                  key={`r1-${rev.id}-${index}`}
+                  className="w-[320px] sm:w-[380px] bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl border border-slate-200/80 transition-all flex flex-col justify-between shrink-0 relative group/card"
+                >
+                  <Quote className="absolute top-5 right-5 w-7 h-7 text-slate-100 group-hover/card:text-blue-100 transition-colors pointer-events-none" />
 
-              <div>
-                {/* Top Google Rating & Date */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex text-amber-400">
-                    {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-amber-400" />
-                    ))}
+                  <div>
+                    {/* Top Google Rating & Date */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex text-amber-400">
+                        {[...Array(rev.rating)].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">{rev.date}</span>
+                    </div>
+
+                    {/* Comment */}
+                    <p className="text-xs text-slate-700 leading-relaxed font-normal mb-4 italic line-clamp-3">
+                      "{rev.comment}"
+                    </p>
+
+                    {/* Project Photo Preview Thumbnail */}
+                    <div className="mb-4 rounded-2xl overflow-hidden h-28 bg-slate-100 border border-slate-200">
+                      <img
+                        src={rev.projectPhoto}
+                        alt={rev.projectType}
+                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">{rev.date}</span>
+
+                  {/* Client Info Bar */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
+                    <img
+                      src={rev.avatar}
+                      alt={rev.clientName}
+                      className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0F172A] font-display flex items-center gap-1">
+                        <span>{rev.clientName}</span>
+                        {rev.verified && (
+                          <ShieldCheck className="w-3 h-3 text-blue-600 fill-blue-50" title="Verified Client" />
+                        )}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                        <MapPin className="w-2.5 h-2.5 text-slate-400" />
+                        <span>{rev.location}</span>
+                        <span>•</span>
+                        <span className="truncate max-w-[100px]">{rev.projectType}</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Comment */}
-                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal mb-6 italic">
-                  "{rev.comment}"
-                </p>
-
-                {/* Project Photo Preview Thumbnail */}
-                <div className="mb-6 rounded-2xl overflow-hidden h-36 bg-slate-100 border border-slate-200">
-                  <img
-                    src={rev.projectPhoto}
-                    alt={rev.projectType}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              </div>
-
-              {/* Client Info Bar */}
-              <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
-                <img
-                  src={rev.avatar}
-                  alt={rev.clientName}
-                  className="w-11 h-11 rounded-full object-cover border-2 border-slate-200"
-                  referrerPolicy="no-referrer"
-                />
-                <div>
-                  <h4 className="text-sm font-bold text-[#0F172A] font-display flex items-center gap-1.5">
-                    <span>{rev.clientName}</span>
-                    {rev.verified && (
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600 fill-blue-50" title="Verified Client" />
-                    )}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-slate-400" />
-                    <span>{rev.location}</span>
-                    <span>•</span>
-                    <span className="truncate max-w-[120px]">{rev.projectType}</span>
-                  </p>
-                </div>
-              </div>
-
+              ))}
             </motion.div>
-          ))}
+          </div>
+
+          {/* ROW 2: Moving Left to Right (-50% -> 0%) */}
+          <div className="relative overflow-hidden group">
+            <motion.div
+              className="flex gap-6 w-max cursor-grab active:cursor-grabbing"
+              animate={{ x: ['-50%', '0%'] }}
+              transition={{
+                repeat: Infinity,
+                repeatType: 'loop',
+                duration: Math.max(35, testimonials.length * 9),
+                ease: 'linear'
+              }}
+              whileHover={{ animationPlayState: 'paused' }}
+            >
+              {[...testimonials, ...testimonials, ...testimonials].reverse().map((rev, index) => (
+                <div
+                  key={`r2-${rev.id}-${index}`}
+                  className="w-[320px] sm:w-[380px] bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl border border-slate-200/80 transition-all flex flex-col justify-between shrink-0 relative group/card"
+                >
+                  <Quote className="absolute top-5 right-5 w-7 h-7 text-slate-100 group-hover/card:text-blue-100 transition-colors pointer-events-none" />
+
+                  <div>
+                    {/* Top Google Rating & Date */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex text-amber-400">
+                        {[...Array(rev.rating)].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">{rev.date}</span>
+                    </div>
+
+                    {/* Comment */}
+                    <p className="text-xs text-slate-700 leading-relaxed font-normal mb-4 italic line-clamp-3">
+                      "{rev.comment}"
+                    </p>
+
+                    {/* Project Photo Preview Thumbnail */}
+                    <div className="mb-4 rounded-2xl overflow-hidden h-28 bg-slate-100 border border-slate-200">
+                      <img
+                        src={rev.projectPhoto}
+                        alt={rev.projectType}
+                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Client Info Bar */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
+                    <img
+                      src={rev.avatar}
+                      alt={rev.clientName}
+                      className="w-9 h-9 rounded-full object-cover border-2 border-slate-200"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div>
+                      <h4 className="text-xs font-bold text-[#0F172A] font-display flex items-center gap-1">
+                        <span>{rev.clientName}</span>
+                        {rev.verified && (
+                          <ShieldCheck className="w-3 h-3 text-blue-600 fill-blue-50" title="Verified Client" />
+                        )}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                        <MapPin className="w-2.5 h-2.5 text-slate-400" />
+                        <span>{rev.location}</span>
+                        <span>•</span>
+                        <span className="truncate max-w-[100px]">{rev.projectType}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
         </div>
 
       </div>

@@ -9,20 +9,23 @@ import {
   MessageSquare,
   CheckCircle2,
   ExternalLink,
-  Building
+  Building,
+  Compass
 } from 'lucide-react';
-import { COMPANY_INFO } from '../data/mockData';
+import { useCMS } from '../context/CMSContext';
 
 interface ContactProps {
   initialServiceTitle?: string;
 }
 
 export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
+  const { companyInfo } = useCMS();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [projectType, setProjectType] = useState(initialServiceTitle || 'Residential Villa');
   const [budget, setBudget] = useState('₹30 Lakhs - ₹60 Lakhs');
+  const [mapLocationUrl, setMapLocationUrl] = useState('');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -45,9 +48,10 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
 • Phone: ${phone || 'N/A'}
 • Project Type: ${projectType}
 • Budget: ${budget}
+• Map Location: ${mapLocationUrl || 'Not provided'}
 • Message: ${message || 'Please contact me regarding site visit.'}`;
 
-    const url = `https://wa.me/${COMPANY_INFO.whatsapp}?text=${encodeURIComponent(text)}`;
+    const url = `https://wa.me/${companyInfo.whatsapp || '918056658861'}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
 
@@ -95,10 +99,10 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Main Office</h4>
                     <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5 leading-relaxed">
-                      {COMPANY_INFO.address}
+                      {companyInfo.address}
                     </p>
                     <p className="text-[11px] text-[#1E3A8A] font-medium mt-1">
-                      Near Aladi Road Junction, Virudhachalam
+                      Virudhachalam & Villupuram Branches
                     </p>
                   </div>
                 </div>
@@ -111,16 +115,16 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Phone / Call</h4>
                     <a
-                      href={`tel:${COMPANY_INFO.phone}`}
+                      href={`tel:${companyInfo.phone}`}
                       className="text-xs sm:text-sm font-bold text-[#0F172A] hover:text-[#1E3A8A] block mt-0.5"
                     >
-                      {COMPANY_INFO.phone}
+                      Primary: {companyInfo.phone}
                     </a>
                     <a
-                      href={`tel:${COMPANY_INFO.secondaryPhone}`}
-                      className="text-xs text-slate-500 hover:text-[#1E3A8A] block"
+                      href={`tel:${companyInfo.secondaryPhone}`}
+                      className="text-xs text-slate-600 font-semibold hover:text-[#1E3A8A] block mt-0.5"
                     >
-                      {COMPANY_INFO.secondaryPhone}
+                      Secondary: {companyInfo.secondaryPhone}
                     </a>
                   </div>
                 </div>
@@ -133,10 +137,10 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Direct Email</h4>
                     <a
-                      href={`mailto:${COMPANY_INFO.email}`}
+                      href={`mailto:${companyInfo.email}`}
                       className="text-xs sm:text-sm font-bold text-[#0F172A] hover:text-[#1E3A8A] block mt-0.5 truncate"
                     >
-                      {COMPANY_INFO.email}
+                      {companyInfo.email}
                     </a>
                   </div>
                 </div>
@@ -149,7 +153,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Business Hours</h4>
                     <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5">
-                      {COMPANY_INFO.hours}
+                      {companyInfo.hours}
                     </p>
                   </div>
                 </div>
@@ -302,15 +306,32 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                     <option value="₹35 Lakhs - ₹60 Lakhs">₹35 Lakhs - ₹60 Lakhs</option>
                     <option value="₹60 Lakhs - ₹1 Crore">₹60 Lakhs - ₹1 Crore</option>
                     <option value="₹1 Crore+ Ultra Luxury">₹1 Crore+ Ultra Luxury</option>
-                    <option value="Consultancy Fee Only">Structural Consultancy Fee Only</option>
+                    <option value="Consultancy Fee Only">Engineering Consultancy Fee Only</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 flex items-center justify-between mb-1.5">
+                    <span>Google Maps Location Link (Optional)</span>
+                    <span className="text-[10px] text-[#1E3A8A] font-normal">Paste GPS pin or map link</span>
+                  </label>
+                  <div className="relative">
+                    <Compass className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                    <input
+                      type="url"
+                      placeholder="https://maps.google.com/?q=..."
+                      value={mapLocationUrl}
+                      onChange={(e) => setMapLocationUrl(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#1E3A8A] outline-none bg-slate-50/50"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1.5">Project Notes & Plot Details</label>
                   <textarea
-                    rows={4}
-                    placeholder="Provide site location (e.g. Aladi Road, Virudhachalam), plot area, preferred floors, or structural questions..."
+                    rows={3}
+                    placeholder="Provide site location (e.g. Aladi Road, Virudhachalam), plot area, preferred floors, or architectural questions..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs focus:ring-2 focus:ring-[#1E3A8A] outline-none bg-slate-50/50"
