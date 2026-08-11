@@ -16,6 +16,15 @@ import { AdminLoginModal } from '../components/admin/AdminLoginModal';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { db } from '../firebase';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  writeBatch
+} from 'firebase/firestore';
 
 export interface CompanyInfoType {
   name: string;
@@ -202,37 +211,204 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState<boolean>(false);
 
-  const openLoginModal = () => setIsLoginModalOpen(true);
-  const closeLoginModal = () => setIsLoginModalOpen(false);
-  const openDashboard = () => setIsDashboardOpen(true);
-  const closeDashboard = () => setIsDashboardOpen(false);
-
-  // Load state from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        if (parsed.companyInfo) setCompanyInfo(parsed.companyInfo);
-        if (parsed.projects && Array.isArray(parsed.projects)) setProjects(parsed.projects);
-        if (parsed.services && Array.isArray(parsed.services)) setServices(parsed.services);
-        if (parsed.testimonials && Array.isArray(parsed.testimonials)) setTestimonials(parsed.testimonials);
-        if (parsed.faqs && Array.isArray(parsed.faqs)) setFaqs(parsed.faqs);
-        if (parsed.estimatorRates) setEstimatorRates(parsed.estimatorRates);
-        if (parsed.leads && Array.isArray(parsed.leads)) setLeads(parsed.leads);
-        if (parsed.adminPin) setAdminPin(parsed.adminPin);
-      }
-
-      const session = sessionStorage.getItem(ADMIN_SESSION_KEY);
-      if (session === 'true') {
-        setIsAuthenticated(true);
-      }
-    } catch (err) {
-      console.error('Failed to parse CMS data from localStorage:', err);
+  const openLoginModal = () => {
+    if (window.location.pathname !== '/admin' && window.location.hash !== '#admin') {
+      window.history.pushState({}, '', '/admin');
     }
+    setIsLoginModalOpen(true);
+  };
+
+  const closeLoginModal = () => {
+    setIsLoginModalOpen(false);
+    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/' || window.location.hash === '#admin') {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
+  const openDashboard = () => {
+    if (window.location.pathname !== '/admin' && window.location.hash !== '#admin') {
+      window.history.pushState({}, '', '/admin');
+    }
+    setIsDashboardOpen(true);
+  };
+
+  const closeDashboard = () => {
+    setIsDashboardOpen(false);
+    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/' || window.location.hash === '#admin') {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
+  // URL Route Listener for /admin and #admin
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      const isAdminRoute = path === '/admin' || path === '/admin/' || hash === '#admin';
+
+      if (isAdminRoute) {
+        const hasSession = sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+        if (hasSession || isAuthenticated) {
+          setIsDashboardOpen(true);
+          setIsLoginModalOpen(false);
+        } else {
+          setIsLoginModalOpen(true);
+          setIsDashboardOpen(false);
+        }
+      } else {
+        setIsDashboardOpen(false);
+        setIsLoginModalOpen(false);
+      }
+    };
+
+    checkAdminRoute();
+
+    window.addEventListener('popstate', checkAdminRoute);
+    window.addEventListener('hashchange', checkAdminRoute);
+    return () => {
+      window.removeEventListener('popstate', checkAdminRoute);
+      window.removeEventListener('hashchange', checkAdminRoute);
+    };
+  }, [isAuthenticated]);
+
+  // Real-time Firestore Subscribers and Initial Seeding
+  useEffect(() => {
+    // 1. Projects
+    const unsubProjects = onSnapshot(collection(db, 'projects'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_PROJECTS.forEach((p) => {
+          batch.set(doc(db, 'projects', p.id), p);
+        });
+        batch.commit().catch((err) => console.error('Error seeding projects:', err));
+        setProjects(DEFAULT_PROJECTS);
+      } else {
+        const list: Project[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as Project);
+        });
+        setProjects(list);
+      }
+    }, (err) => console.error('Projects firestore error:', err));
+
+    // 2. Services
+    const unsubServices = onSnapshot(collection(db, 'services'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_SERVICES.forEach((s) => {
+          batch.set(doc(db, 'services', s.id), s);
+        });
+        batch.commit().catch((err) => console.error('Error seeding services:', err));
+        setServices(DEFAULT_SERVICES);
+      } else {
+        const list: ServiceItemWithVisibility[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as ServiceItemWithVisibility);
+        });
+        setServices(list);
+      }
+    }, (err) => console.error('Services firestore error:', err));
+
+    // 3. Testimonials
+    const unsubTestimonials = onSnapshot(collection(db, 'testimonials'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_TESTIMONIALS.forEach((t) => {
+          batch.set(doc(db, 'testimonials', t.id), t);
+        });
+        batch.commit().catch((err) => console.error('Error seeding testimonials:', err));
+        setTestimonials(DEFAULT_TESTIMONIALS);
+      } else {
+        const list: Testimonial[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as Testimonial);
+        });
+        setTestimonials(list);
+      }
+    }, (err) => console.error('Testimonials firestore error:', err));
+
+    // 4. FAQs
+    const unsubFaqs = onSnapshot(collection(db, 'faqs'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_FAQS.forEach((f) => {
+          batch.set(doc(db, 'faqs', f.id), f);
+        });
+        batch.commit().catch((err) => console.error('Error seeding faqs:', err));
+        setFaqs(DEFAULT_FAQS);
+      } else {
+        const list: FAQItem[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as FAQItem);
+        });
+        setFaqs(list);
+      }
+    }, (err) => console.error('FAQs firestore error:', err));
+
+    // 5. Leads
+    const unsubLeads = onSnapshot(collection(db, 'leads'), (snapshot) => {
+      if (snapshot.empty) {
+        const batch = writeBatch(db);
+        DEFAULT_LEADS.forEach((l) => {
+          batch.set(doc(db, 'leads', l.id), l);
+        });
+        batch.commit().catch((err) => console.error('Error seeding leads:', err));
+        setLeads(DEFAULT_LEADS);
+      } else {
+        const list: ClientLead[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ id: docSnap.id, ...docSnap.data() } as ClientLead);
+        });
+        setLeads(list);
+      }
+    }, (err) => console.error('Leads firestore error:', err));
+
+    // 6. Company Info
+    const unsubCompanyInfo = onSnapshot(doc(db, 'settings', 'company_info'), (docSnap) => {
+      if (docSnap.exists()) {
+        setCompanyInfo(docSnap.data() as CompanyInfoType);
+      } else {
+        setDoc(doc(db, 'settings', 'company_info'), DEFAULT_COMPANY_INFO).catch((err) => console.error(err));
+        setCompanyInfo(DEFAULT_COMPANY_INFO);
+      }
+    }, (err) => console.error('Company info firestore error:', err));
+
+    // 7. Estimator Rates
+    const unsubEstimatorRates = onSnapshot(doc(db, 'settings', 'estimator_rates'), (docSnap) => {
+      if (docSnap.exists()) {
+        setEstimatorRates(docSnap.data() as EstimatorRates);
+      } else {
+        setDoc(doc(db, 'settings', 'estimator_rates'), DEFAULT_ESTIMATOR_RATES).catch((err) => console.error(err));
+        setEstimatorRates(DEFAULT_ESTIMATOR_RATES);
+      }
+    }, (err) => console.error('Estimator rates firestore error:', err));
+
+    // 8. Admin Settings
+    const unsubAdmin = onSnapshot(doc(db, 'settings', 'admin_pin'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data()?.adminPin) {
+        setAdminPin(docSnap.data().adminPin);
+      }
+    }, (err) => console.error('Admin pin firestore error:', err));
+
+    // Session check
+    const session = sessionStorage.getItem(ADMIN_SESSION_KEY);
+    if (session === 'true') {
+      setIsAuthenticated(true);
+    }
+
+    return () => {
+      unsubProjects();
+      unsubServices();
+      unsubTestimonials();
+      unsubFaqs();
+      unsubLeads();
+      unsubCompanyInfo();
+      unsubEstimatorRates();
+      unsubAdmin();
+    };
   }, []);
 
-  // Save changes to localStorage whenever state updates
+  // Save changes to localStorage whenever state updates as fallback
   const saveStateToStorage = (updatedState: {
     companyInfo?: CompanyInfoType;
     projects?: Project[];
@@ -256,24 +432,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState));
     } catch (err) {
-      console.warn('Storage limit reached or failed to save state to localStorage:', err);
-      try {
-        // Fallback: compress state or preserve critical state without excessive lead logs if storage is full
-        const compactState = {
-          companyInfo: updatedState.companyInfo ?? companyInfo,
-          projects: updatedState.projects ?? projects,
-          services: updatedState.services ?? services,
-          testimonials: updatedState.testimonials ?? testimonials,
-          faqs: updatedState.faqs ?? faqs,
-          estimatorRates: updatedState.estimatorRates ?? estimatorRates,
-          leads: (updatedState.leads ?? leads).slice(0, 10),
-          adminPin: updatedState.adminPin ?? adminPin
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(compactState));
-      } catch (fallbackErr) {
-        // If still full, silently catch so the application continues seamlessly in memory
-        console.warn('Active session state retained in memory.');
-      }
+      // ignore local storage quota overflow
     }
   };
 
@@ -312,163 +471,137 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const cleanPin = newPin.trim();
     setAdminPin(cleanPin);
+    setDoc(doc(db, 'settings', 'admin_pin'), { adminPin: cleanPin }).catch((err) => console.error(err));
     saveStateToStorage({ adminPin: cleanPin });
-    showToast('Admin PIN updated successfully', 'success');
+    showToast('Admin PIN updated successfully in cloud database', 'success');
     return true;
   };
 
   // Leads CRUD
   const addLead = (leadData: Omit<ClientLead, 'id'>) => {
-    const newLead: ClientLead = {
-      ...leadData,
-      id: `lead-${Date.now()}`
-    };
-    const next = [newLead, ...leads];
-    setLeads(next);
-    saveStateToStorage({ leads: next });
+    const id = `lead-${Date.now()}`;
+    const newLead: ClientLead = { ...leadData, id };
+    setDoc(doc(db, 'leads', id), newLead).catch((err) => console.error(err));
     showToast(`New client lead logged for ${leadData.name}`);
   };
 
   const updateLeadStatus = (id: string, status: ClientLead['status'], notes?: string) => {
-    const next = leads.map((l) => (l.id === id ? { ...l, status, ...(notes !== undefined ? { notes } : {}) } : l));
-    setLeads(next);
-    saveStateToStorage({ leads: next });
+    const existing = leads.find((l) => l.id === id);
+    if (!existing) return;
+    const updated = { ...existing, status, ...(notes !== undefined ? { notes } : {}) };
+    setDoc(doc(db, 'leads', id), updated).catch((err) => console.error(err));
     showToast(`Lead status updated to "${status}"`);
   };
 
   const deleteLead = (id: string) => {
-    const next = leads.filter((l) => l.id !== id);
-    setLeads(next);
-    saveStateToStorage({ leads: next });
+    deleteDoc(doc(db, 'leads', id)).catch((err) => console.error(err));
     showToast('Lead record removed', 'info');
   };
 
   // Projects CRUD
   const addProject = (project: Omit<Project, 'id'>) => {
-    const newProj: Project = {
-      ...project,
-      id: `proj-${Date.now()}`
-    };
-    const next = [newProj, ...projects];
-    setProjects(next);
-    saveStateToStorage({ projects: next });
-    showToast(`Project "${project.title}" added successfully`);
+    const id = `proj-${Date.now()}`;
+    const newProj: Project = { ...project, id };
+    setDoc(doc(db, 'projects', id), newProj).catch((err) => console.error(err));
+    showToast(`Project "${project.title}" saved permanently to Cloud Database!`);
   };
 
   const updateProject = (id: string, updatedFields: Partial<Project>) => {
-    const next = projects.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
-    setProjects(next);
-    saveStateToStorage({ projects: next });
-    showToast('Project updated successfully');
+    const existing = projects.find((p) => p.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...updatedFields };
+    setDoc(doc(db, 'projects', id), updated).catch((err) => console.error(err));
+    showToast('Project updated successfully in Cloud Database!');
   };
 
   const deleteProject = (id: string) => {
     const projToDelete = projects.find((p) => p.id === id);
-    const next = projects.filter((p) => p.id !== id);
-    setProjects(next);
-    saveStateToStorage({ projects: next });
-    showToast(`Deleted project "${projToDelete?.title || id}"`, 'info');
+    deleteDoc(doc(db, 'projects', id)).catch((err) => console.error(err));
+    showToast(`Deleted project "${projToDelete?.title || id}" from Cloud Database`, 'info');
   };
 
   // Services CRUD
   const addService = (service: Omit<ServiceItemWithVisibility, 'id'>) => {
-    const newServ: ServiceItemWithVisibility = {
-      ...service,
-      id: `serv-${Date.now()}`
-    };
-    const next = [...services, newServ];
-    setServices(next);
-    saveStateToStorage({ services: next });
-    showToast(`Service "${service.title}" added`);
+    const id = `serv-${Date.now()}`;
+    const newServ: ServiceItemWithVisibility = { ...service, id };
+    setDoc(doc(db, 'services', id), newServ).catch((err) => console.error(err));
+    showToast(`Service "${service.title}" saved to Cloud Database`);
   };
 
   const updateService = (id: string, serviceFields: Partial<ServiceItemWithVisibility>) => {
-    const next = services.map((s) => (s.id === id ? { ...s, ...serviceFields } : s));
-    setServices(next);
-    saveStateToStorage({ services: next });
+    const existing = services.find((s) => s.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...serviceFields };
+    setDoc(doc(db, 'services', id), updated).catch((err) => console.error(err));
     showToast('Service updated successfully');
   };
 
   const deleteService = (id: string) => {
-    const next = services.filter((s) => s.id !== id);
-    setServices(next);
-    saveStateToStorage({ services: next });
+    deleteDoc(doc(db, 'services', id)).catch((err) => console.error(err));
     showToast('Service removed', 'info');
   };
 
   const toggleServiceVisibility = (id: string) => {
-    const next = services.map((s) => (s.id === id ? { ...s, hidden: !s.hidden } : s));
-    setServices(next);
-    saveStateToStorage({ services: next });
-    const toggled = next.find((s) => s.id === id);
-    showToast(`Service "${toggled?.title}" is now ${toggled?.hidden ? 'Hidden' : 'Visible'}`);
+    const existing = services.find((s) => s.id === id);
+    if (!existing) return;
+    const updated = { ...existing, hidden: !existing.hidden };
+    setDoc(doc(db, 'services', id), updated).catch((err) => console.error(err));
+    showToast(`Service "${existing.title}" is now ${updated.hidden ? 'Hidden' : 'Visible'}`);
   };
 
   // Testimonials CRUD
   const addTestimonial = (test: Omit<Testimonial, 'id'>) => {
-    const newTest: Testimonial = {
-      ...test,
-      id: `test-${Date.now()}`
-    };
-    const next = [newTest, ...testimonials];
-    setTestimonials(next);
-    saveStateToStorage({ testimonials: next });
-    showToast(`Review from "${test.clientName}" added`);
+    const id = `test-${Date.now()}`;
+    const newTest: Testimonial = { ...test, id };
+    setDoc(doc(db, 'testimonials', id), newTest).catch((err) => console.error(err));
+    showToast(`Review from "${test.clientName}" saved to Cloud`);
   };
 
   const updateTestimonial = (id: string, testFields: Partial<Testimonial>) => {
-    const next = testimonials.map((t) => (t.id === id ? { ...t, ...testFields } : t));
-    setTestimonials(next);
-    saveStateToStorage({ testimonials: next });
-    showToast('Review updated successfully');
+    const existing = testimonials.find((t) => t.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...testFields };
+    setDoc(doc(db, 'testimonials', id), updated).catch((err) => console.error(err));
+    showToast('Review updated in Cloud');
   };
 
   const deleteTestimonial = (id: string) => {
-    const next = testimonials.filter((t) => t.id !== id);
-    setTestimonials(next);
-    saveStateToStorage({ testimonials: next });
+    deleteDoc(doc(db, 'testimonials', id)).catch((err) => console.error(err));
     showToast('Review deleted', 'info');
   };
 
   // FAQs CRUD
   const addFAQ = (faq: Omit<FAQItem, 'id'>) => {
-    const newFaq: FAQItem = {
-      ...faq,
-      id: `faq-${Date.now()}`
-    };
-    const next = [...faqs, newFaq];
-    setFaqs(next);
-    saveStateToStorage({ faqs: next });
-    showToast('New FAQ added');
+    const id = `faq-${Date.now()}`;
+    const newFaq: FAQItem = { ...faq, id };
+    setDoc(doc(db, 'faqs', id), newFaq).catch((err) => console.error(err));
+    showToast('New FAQ saved to Cloud');
   };
 
   const updateFAQ = (id: string, faqFields: Partial<FAQItem>) => {
-    const next = faqs.map((f) => (f.id === id ? { ...f, ...faqFields } : f));
-    setFaqs(next);
-    saveStateToStorage({ faqs: next });
+    const existing = faqs.find((f) => f.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...faqFields };
+    setDoc(doc(db, 'faqs', id), updated).catch((err) => console.error(err));
     showToast('FAQ updated');
   };
 
   const deleteFAQ = (id: string) => {
-    const next = faqs.filter((f) => f.id !== id);
-    setFaqs(next);
-    saveStateToStorage({ faqs: next });
+    deleteDoc(doc(db, 'faqs', id)).catch((err) => console.error(err));
     showToast('FAQ removed', 'info');
   };
 
   // Company Info & Estimator Rates
   const updateCompanyInfo = (infoFields: Partial<CompanyInfoType>) => {
     const next = { ...companyInfo, ...infoFields };
-    setCompanyInfo(next);
-    saveStateToStorage({ companyInfo: next });
-    showToast('Contact and Site Settings updated');
+    setDoc(doc(db, 'settings', 'company_info'), next).catch((err) => console.error(err));
+    showToast('Company Info updated in Cloud Database!');
   };
 
   const updateEstimatorRates = (ratesFields: Partial<EstimatorRates>) => {
     const next = { ...estimatorRates, ...ratesFields };
-    setEstimatorRates(next);
-    saveStateToStorage({ estimatorRates: next });
-    showToast('Cost Estimator package rates updated');
+    setDoc(doc(db, 'settings', 'estimator_rates'), next).catch((err) => console.error(err));
+    showToast('Cost Estimator package rates updated in Cloud Database!');
   };
 
   // Backup & Reset
@@ -617,7 +750,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isOpen={isLoginModalOpen}
         onClose={closeLoginModal}
         onSuccess={() => {
-          closeLoginModal();
+          setIsLoginModalOpen(false);
           openDashboard();
         }}
       />

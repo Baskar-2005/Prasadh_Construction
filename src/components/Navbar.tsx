@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Phone, Calendar, Menu, X, FileText, Lock, LayoutDashboard } from 'lucide-react';
+import { Phone, Calendar, Menu, X, FileText } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
 import prasadhLogoEmblem from '../assets/images/prasadh_logo_emblem_1786205642641.jpg';
-import { useCMS } from '../context/CMSContext';
 
 interface NavbarProps {
   onOpenConsultationModal: () => void;
@@ -14,7 +13,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenConsultationModal,
   onOpenCompanyProfileModal
 }) => {
-  const { isAuthenticated, openLoginModal, openDashboard } = useCMS();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -132,31 +130,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Buttons */}
           <div className="hidden lg:flex items-center gap-2 shrink-0 whitespace-nowrap">
-            {/* Admin CMS Button */}
-            {isAuthenticated ? (
-              <button
-                onClick={openDashboard}
-                className={`flex items-center gap-1.5 font-semibold text-amber-300 bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 rounded-full transition-all backdrop-blur-md shadow-2xs whitespace-nowrap ${
-                  scrolled ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-xs'
-                }`}
-                title="Open CMS Dashboard"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-amber-300" />
-                <span>Admin Panel</span>
-              </button>
-            ) : (
-              <button
-                onClick={openLoginModal}
-                className={`flex items-center gap-1.5 font-medium text-slate-300 hover:text-amber-300 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 rounded-full transition-all backdrop-blur-md shadow-2xs whitespace-nowrap ${
-                  scrolled ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-xs'
-                }`}
-                title="Admin Login"
-              >
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Admin</span>
-              </button>
-            )}
-
             {/* Call Now Button */}
             <a
               href={`tel:${COMPANY_INFO.phone}`}
@@ -237,30 +210,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="h-px bg-white/10 my-1" />
 
               <div className="flex flex-col gap-2">
-                {isAuthenticated ? (
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      openDashboard();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-amber-300 bg-amber-400/20 hover:bg-amber-400/30 rounded-2xl border border-amber-400/30"
-                  >
-                    <LayoutDashboard className="w-4 h-4 text-amber-300" />
-                    <span>Open Admin CMS Panel</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      openLoginModal();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700"
-                  >
-                    <Lock className="w-4 h-4 text-amber-400" />
-                    <span>Admin CMS Login</span>
-                  </button>
-                )}
-
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);

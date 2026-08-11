@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "projects": {
+      "title": "Projects",
+      "description": "Portfolio projects and building galleries",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "location": { "type": "string" },
+        "area": { "type": "string" },
+        "completionYear": { "type": "string" },
+        "constructionType": { "type": "string" },
+        "image": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": "string" },
+        "highlights": { "type": "array", "items": { "type": "string" } },
+        "clientName": { "type": "string" }
+      },
+      "required": ["title", "category", "location", "area", "image"]
+    },
+    "company_info": {
+      "title": "Company Info",
+      "description": "Business settings and contact info",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "tagline": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "registrationNo": { "type": "string" },
+        "gstNo": { "type": "string" }
+      }
+    },
+    "services": {
+      "title": "Services",
+      "description": "Offered construction services",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "fullDescription": { "type": "string" },
+        "iconName": { "type": "string" },
+        "features": { "type": "array", "items": { "type": "string" } },
+        "visible": { "type": "boolean" }
+      }
+    },
+    "leads": {
+      "title": "Client Leads",
+      "description": "Inquiries from clients",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "projectType": { "type": "string" },
+        "location": { "type": "string" },
+        "estimatedArea": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    }
+  }
+}
