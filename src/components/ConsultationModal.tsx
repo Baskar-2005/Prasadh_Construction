@@ -82,7 +82,7 @@ Location: Virudhachalam / Site Visit`;
             Book Free Consultation
           </h3>
           <p className="text-xs text-slate-500 mb-6">
-            Consult directly with Er. V. Prasadh (M.E. Structural Engg) for your project in Virudhachalam.
+            Consult directly with Er. S. Vishnu Prasadh for your project in Virudhachalam.
           </p>
 
           {confirmed ? (

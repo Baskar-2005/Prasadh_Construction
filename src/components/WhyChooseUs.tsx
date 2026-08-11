@@ -26,7 +26,7 @@ export const WhyChooseUs: React.FC = () => {
             We Deliver More Than Just <span className="shiny-text-blue">Strong Buildings.</span>
           </h2>
           <p className="mt-4 text-base text-slate-600 font-normal leading-relaxed">
-            Compare our structural engineering standards against traditional unorganized local builders. Experience total peace of mind.
+            Compare our engineering standards against traditional unorganized local builders. Experience total peace of mind.
           </p>
         </motion.div>
 
@@ -93,7 +93,7 @@ export const WhyChooseUs: React.FC = () => {
                       Prasadh Construction
                     </h3>
                     <p className="text-xs text-amber-300 font-semibold flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> M.E. Structural Engineering Precision
+                      <Sparkles className="w-3 h-3" /> Certified Engineering Precision
                     </p>
                   </div>
                 </div>

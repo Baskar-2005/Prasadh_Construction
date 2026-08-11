@@ -58,32 +58,32 @@ export const PROJECTS: Project[] = [
     location: "Main Bazaar Road, Virudhachalam",
     area: "12,500 Sq. Ft.",
     completionYear: "2023",
-    constructionType: "G+4 Structural Steel & Concrete Complex",
+    constructionType: "G+4 Reinforced Steel & Concrete Complex",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
     images: [
       "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80"
     ],
-    description: "Multi-tenant commercial hub with high-load basement parking, seismic-resistant structural design, and modern glass curtain walling.",
-    highlights: ["Basement Parking Driveway", "VRF Air Conditioning Ready", "Seismic Zone Structural Compliance", "Elevator Core"],
+    description: "Multi-tenant commercial hub with high-load basement parking, seismic-resistant engineering design, and modern glass curtain walling.",
+    highlights: ["Basement Parking Driveway", "VRF Air Conditioning Ready", "Seismic Zone Safety Compliance", "Elevator Core"],
     clientName: "Vrindavan Retail Group"
   },
   {
     id: "proj-3",
-    title: "Apex Structural Health & Audit Center",
-    category: "structural",
+    title: "Apex Engineering & Audit Center",
+    category: "consultancy",
     location: "Neyveli Township Road",
     area: "8,200 Sq. Ft.",
     completionYear: "2024",
-    constructionType: "Heavy Structural Steel & Concrete Matrix",
+    constructionType: "Heavy Steel Frame & Concrete Matrix",
     image: engineeringDeskImage,
     images: [
       engineeringDeskImage,
       "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80"
     ],
-    description: "Structural engineering consultancy and execution for heavy machine foundations and vibration-free laboratory environment.",
+    description: "Engineering consultancy and execution for heavy machine foundations and vibration-free laboratory environment.",
     highlights: ["High-Strength M35 Grade Concrete", "Ultrasonic Non-Destructive Testing", "Vibration Isolation Slabs", "3D Finite Element Analysis"],
     clientName: "Neyveli Industrial Technologies"
   },
@@ -125,7 +125,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "proj-6",
-    title: "Heritage Home Structural Renovation",
+    title: "Heritage Home Building Renovation",
     category: "renovation",
     location: "Old Town, Virudhachalam",
     area: "3,800 Sq. Ft.",
@@ -136,7 +136,7 @@ export const PROJECTS: Project[] = [
       "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80"
     ],
-    description: "Complete structural strengthening and modernization of a 40-year traditional home without compromising structural integrity.",
+    description: "Complete foundation strengthening and modernization of a 40-year traditional home while preserving its core foundation and heritage appeal.",
     highlights: ["Micro-Concrete Jacketing", "Steel Beam Retrofitting", "Waterproofing Matrix", "Modernized Open Plan"],
     clientName: "Er. M. Rajasekaran"
   }
@@ -147,8 +147,8 @@ export const SERVICES: ServiceItem[] = [
     id: "serv-1",
     title: "Residential Construction",
     iconName: "Home",
-    description: "End-to-end luxury villa and residential home construction with structural precision, premium material specs, and strict engineering supervision.",
-    deliverables: ["Soil Testing & Foundation Design", "Tata Tiscon & UltraTech Material Matrix", "Weekly Progress Photo Reports", "Keys Handover with Structural Warranty"],
+    description: "End-to-end luxury villa and residential home construction with engineering precision, premium material specifications, and strict site supervision.",
+    deliverables: ["Soil Testing & Foundation Design", "Tata Tiscon & UltraTech Material Matrix", "Weekly Progress Photo Reports", "Keys Handover with Official Build Warranty"],
     idealFor: "Homeowners looking for custom luxury villas & duplex homes."
   },
   {
@@ -156,16 +156,16 @@ export const SERVICES: ServiceItem[] = [
     title: "Commercial Buildings",
     iconName: "Building2",
     description: "Robust commercial complexes, shopping hubs, and office spaces engineered for high footfall, fire safety compliance, and maximum rentable floor area.",
-    deliverables: ["Heavy Duty Structural Framing", "Fire Safety & Elevator Shaft Planning", "Basement Parking Engineering", "Commercial Elevation Design"],
+    deliverables: ["Heavy Duty Load-Bearing Framing", "Fire Safety & Elevator Shaft Planning", "Basement Parking Engineering", "Commercial Elevation Design"],
     idealFor: "Business owners, investors, and commercial landlords."
   },
   {
     id: "serv-3",
-    title: "Structural Consultancy",
+    title: "Engineering Consultancy",
     iconName: "Compass",
-    description: "Expert engineering analysis, structural stability audits, load calculations, and rebar detailing by M.E. Structural Engineering specialists.",
-    deliverables: ["3D ETABS & STAAD.Pro Analysis", "Structural Detailing Drawings", "Stability Certification for Banks/Govt", "Site Rebar Verification"],
-    idealFor: "Architects, contractors, and builders needing structural sign-offs."
+    description: "Expert engineering analysis, building stability audits, load calculations, and rebar detailing by experienced engineering specialists.",
+    deliverables: ["3D ETABS & STAAD.Pro Analysis", "Engineering Detailing Drawings", "Stability Certification for Banks/Govt", "Site Rebar Verification"],
+    idealFor: "Architects, contractors, and builders needing professional engineering sign-offs."
   },
   {
     id: "serv-4",
@@ -180,7 +180,7 @@ export const SERVICES: ServiceItem[] = [
     title: "Building Approval Assistance",
     iconName: "FileCheck",
     description: "Hassle-free documentation and plan submission assistance for DTCP, Panchayat, Municipality, and Local Planning Authority sanctions.",
-    deliverables: ["Sanction Drawing Preparation", "Structural Stability Certificate", "Revenue & Blue Map Documentation", "Direct Authority Follow-up"],
+    deliverables: ["Sanction Drawing Preparation", "Building Stability Certificate", "Revenue & Blue Map Documentation", "Direct Authority Follow-up"],
     idealFor: "Property owners requiring official building plan sanctions."
   },
   {
@@ -195,8 +195,8 @@ export const SERVICES: ServiceItem[] = [
     id: "serv-7",
     title: "Renovation & Extension",
     iconName: "Hammer",
-    description: "Structural retrofitting, vertical floor additions, floor plan remodeling, and elevation upgrades to breath new life into existing buildings.",
-    deliverables: ["Structural Load Capacity Assessment", "Column Jacketing & Beams Extension", "Facade Modernization", "Damp-proof Thermal Coating"],
+    description: "Building retrofitting, vertical floor additions, floor plan remodeling, and elevation upgrades to breathe new life into existing properties.",
+    deliverables: ["Building Load Capacity Assessment", "Column Jacketing & Beams Extension", "Facade Modernization", "Damp-proof Thermal Coating"],
     idealFor: "Existing property owners wanting modern upgrades."
   },
   {
@@ -279,8 +279,8 @@ export const COMPARISON_METRICS: ComparisonMetric[] = [
 export const CONSULTANCY_FEATURES: ConsultancyFeature[] = [
   {
     id: "c-1",
-    title: "Structural Design & Calculations",
-    description: "Precision load analysis using STAAD.Pro and ETABS software to craft safe, cost-optimized RCC and structural steel designs.",
+    title: "Engineering Design & Load Calculations",
+    description: "Precision load analysis using STAAD.Pro and ETABS software to craft safe, cost-optimized RCC and heavy steel framing designs.",
     iconName: "Cpu",
     keyOutputs: ["Columns & Beams Schedule", "Foundation Depth Matrix", "Seismic Load Distribution"]
   },
@@ -314,7 +314,7 @@ export const CONSULTANCY_FEATURES: ConsultancyFeature[] = [
   },
   {
     id: "c-6",
-    title: "Structural Stability Certification",
+    title: "Building Stability Certification",
     description: "Official engineering stability reports required for commercial licenses, bank loan disbursements, and local approvals.",
     iconName: "CheckCircle2",
     keyOutputs: ["Registered Er. Stamp Certificate", "Load Capacity Endorsement", "Government Compliance File"]

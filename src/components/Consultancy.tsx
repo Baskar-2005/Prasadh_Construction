@@ -33,7 +33,7 @@ const FEATURE_SPECS: Record<string, { software: string; compliance: string; turn
     software: 'STAAD.Pro V8i & ETABS 20',
     compliance: 'IS 456:2000 & IS 1893:2016 (Seismic)',
     turnaround: '48 - 72 Hours Express Delivery',
-    stamp: 'Chartered Structural Engineer Sign-off'
+    stamp: 'Chartered Civil Engineer Sign-off'
   },
   'c-2': {
     software: 'Ultrasonic Pulse Velocity & NDT',
@@ -104,11 +104,11 @@ export const Consultancy: React.FC<ConsultancyProps> = ({ onOpenConsultationModa
     software: 'STAAD.Pro & AutoCAD 3D',
     compliance: 'IS 456 Structural Codes',
     turnaround: 'Rapid Engineering Turnaround',
-    stamp: 'M.E. Structural Seal'
+    stamp: 'Certified Engineering Seal'
   };
 
   const encodedWhatsAppMsg = encodeURIComponent(
-    `Hello Er. V. Prasadh, I would like to inquire about your Engineering Consultancy service: "${activeFeature.title}". Please provide details on structural auditing and pricing.`
+    `Hello Er. S. Vishnu Prasadh, I would like to inquire about your Engineering Consultancy service: "${activeFeature.title}". Please provide details on structural auditing and pricing.`
   );
 
   return (
@@ -140,7 +140,7 @@ export const Consultancy: React.FC<ConsultancyProps> = ({ onOpenConsultationModa
           <div className="flex flex-wrap items-center justify-center gap-2 mb-3 sm:mb-4">
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-amber-300 bg-amber-400/10 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-amber-400/30 inline-flex items-center gap-1.5 shadow-md backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              M.E. Structural Engineering Office
+              Certified Engineering Office
             </span>
           </div>
 
@@ -226,7 +226,7 @@ export const Consultancy: React.FC<ConsultancyProps> = ({ onOpenConsultationModa
                           <p className={`text-[11px] transition-colors ${
                             isSelected ? 'text-amber-300/90' : 'text-slate-400'
                           }`}>
-                            M.E. Structural Standards • Certified
+                            Certified Engineering Standards • Certified
                           </p>
                         </div>
                       </div>
@@ -252,14 +252,14 @@ export const Consultancy: React.FC<ConsultancyProps> = ({ onOpenConsultationModa
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 rounded-full bg-slate-800 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0 font-bold text-xs">
-                    EP
+                    VP
                   </div>
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full animate-ping" />
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-white">Er. V. Prasadh M.E.</p>
-                  <p className="text-[11px] text-emerald-400 font-medium">● Instant Call with Er. V. Prasadh</p>
+                  <p className="text-xs font-bold text-white">Er. S. Vishnu Prasadh</p>
+                  <p className="text-[11px] text-emerald-400 font-medium">● Instant Call with Er. S. Vishnu Prasadh</p>
                 </div>
               </div>
               <a
@@ -386,7 +386,7 @@ export const Consultancy: React.FC<ConsultancyProps> = ({ onOpenConsultationModa
                   >
                     <span className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shine-sweep pointer-events-none" />
                     <Send className="w-4 h-4 text-slate-950 shrink-0" />
-                    <span>Request Structural Calculation / Audit</span>
+                    <span>Request Calculation / Audit</span>
                   </button>
 
                   {/* Direct WhatsApp Query Button */}
@@ -402,7 +402,7 @@ export const Consultancy: React.FC<ConsultancyProps> = ({ onOpenConsultationModa
                 </div>
 
                 <p className="text-[11px] text-slate-400 text-center sm:text-left mt-3 font-medium">
-                  ✓ Direct consultation with Er. V. Prasadh M.E. (+91 80566 58861) • No obligation quote
+                  ✓ Direct consultation with Er. S. Vishnu Prasadh (+91 80566 58861) • No obligation quote
                 </p>
 
               </motion.div>

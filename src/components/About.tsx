@@ -22,7 +22,7 @@ export const About: React.FC = () => {
     {
       year: "2014",
       title: "Foundation & Vision",
-      desc: "Er. V. Prasadh established the firm in Virudhachalam following postgraduate structural engineering specialization, focusing on precision rebar analysis."
+      desc: "Er. S. Vishnu Prasadh established the firm in Virudhachalam focusing on precision building execution and quality engineering analysis."
     },
     {
       year: "2017",
@@ -63,7 +63,7 @@ export const About: React.FC = () => {
             Engineering Precision Meets <span className="shiny-text-blue">Architectural Artistry.</span>
           </h2>
           <p className="mt-4 text-base text-slate-600 leading-relaxed font-normal">
-            Headquartered in Virudhachalam, we bridge the gap between traditional Tamil construction and state-of-the-art structural engineering.
+            Headquartered in Virudhachalam, we bridge the gap between traditional Tamil construction and state-of-the-art building engineering.
           </p>
         </motion.div>
 
@@ -115,7 +115,7 @@ export const About: React.FC = () => {
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
                 <img
                   src={engineeringDeskImage}
-                  alt="Er. V. Prasadh Engineering Studio"
+                  alt="Er. S. Vishnu Prasadh Engineering Studio"
                   className="w-full h-[400px] sm:h-[480px] object-cover"
                   referrerPolicy="no-referrer"
                 />
@@ -140,7 +140,7 @@ export const About: React.FC = () => {
               </h3>
               
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                Prasadh Construction Company & Consultant was established with a singular vision: to bring structural engineering sophistication to Virudhachalam, Cuddalore, Neyveli, and surrounding regions.
+                Prasadh Construction Company & Consultant was established with a singular vision: to bring engineering sophistication to Virudhachalam, Cuddalore, Neyveli, and surrounding regions.
               </p>
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">

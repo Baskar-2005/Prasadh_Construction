@@ -106,7 +106,7 @@ export const DEFAULT_LEADS: ClientLead[] = [
     name: 'Senthil Kumar B.',
     phone: '+91 94432 12098',
     location: 'Cuddalore Main Road, Virudhachalam',
-    serviceRequested: '3D Elevation & Structural Engineering',
+    serviceRequested: '3D Elevation & Structural Consultancy',
     estimatedBudget: '₹1,85,000',
     areaSqFt: 1800,
     status: 'Contacted',

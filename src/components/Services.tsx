@@ -113,7 +113,7 @@ export const Services: React.FC<ServicesProps> = ({ onOpenConsultationModal }) =
               Have a specialized plot or commercial project requirement?
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-2">
-              Book a direct 1-on-1 session with Er. V. Prasadh (M.E. Structural Engg) in Virudhachalam.
+              Book a direct 1-on-1 session with Er. S. Vishnu Prasadh in Virudhachalam.
             </p>
           </div>
 

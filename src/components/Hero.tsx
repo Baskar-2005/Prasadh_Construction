@@ -10,7 +10,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
-import prasadhHeroBg from '../assets/Prasadh_Hero2.png';
+import prasadhHeroBg from '../assets/Prasadh_Hero3.png';
 
 interface HeroProps {
   onOpenConsultationModal: () => void;
@@ -91,7 +91,7 @@ export const Hero: React.FC<HeroProps> = ({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400" />
             </span>
             <span className="text-xs font-bold text-slate-100 tracking-wide truncate">
-              Registered Structural Consultancy • <span className="shiny-text-gold">Er. S. Vishnu Prasadh</span>
+              Registered Engineering Consultancy • <span className="shiny-text-gold">Er. S. Vishnu Prasadh</span>
             </span>
           </motion.div>
         </div>

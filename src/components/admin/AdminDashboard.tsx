@@ -585,7 +585,7 @@ const OverviewTab: React.FC<{
           />
           <div>
             <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest">
-              Virudhachalam Civil & Structural Engineering Portal
+              Virudhachalam Civil & Construction Portal
             </span>
             <h2 className="text-xl sm:text-2xl font-black font-display text-white">
               Welcome back, Er. S. Vishnu Prasadh

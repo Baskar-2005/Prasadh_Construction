@@ -109,7 +109,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
             Let's Build Something <span className="shiny-text-blue">Great Together.</span>
           </h2>
           <p className="mt-4 text-base text-slate-600 font-normal leading-relaxed">
-            Visit our office in Virudhachalam or send us a message below. Er. V. Prasadh and our engineering team are ready to guide your vision.
+            Visit our office in Virudhachalam or send us a message below. Er. S. Vishnu Prasadh and our engineering team are ready to guide your vision.
           </p>
         </motion.div>
 
@@ -345,7 +345,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                     >
                       <option value="Residential Villa">Residential Villa Construction</option>
                       <option value="Commercial Building">Commercial Complex / Hub</option>
-                      <option value="Structural Consultancy">Structural Engineering Consultancy</option>
+                      <option value="Structural Consultancy">Engineering & Structural Consultancy</option>
                       <option value="Architectural Planning">2D/3D Architectural Planning</option>
                       <option value="Building Approval">Building Approval Sanction</option>
                       <option value="Interior Design">Luxury Interior Design</option>
