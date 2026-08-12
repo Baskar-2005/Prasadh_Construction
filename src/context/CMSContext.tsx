@@ -552,6 +552,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteLead = (id: string) => {
+    setLeads((prev) => prev.filter((l) => l.id !== id));
     deleteDoc(doc(db, 'leads', id)).catch((err) => console.error(err));
     showToast('Lead record removed', 'info');
   };
@@ -574,6 +575,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteProject = (id: string) => {
     const projToDelete = projects.find((p) => p.id === id);
+    setProjects((prev) => prev.filter((p) => p.id !== id));
     deleteDoc(doc(db, 'projects', id)).catch((err) => console.error(err));
     showToast(`Deleted project "${projToDelete?.title || id}" from Cloud Database`, 'info');
   };
@@ -595,6 +597,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteBeforeAfterProject = (id: string) => {
+    setBeforeAfterProjects((prev) => prev.filter((b) => b.id !== id));
     deleteDoc(doc(db, 'before_after', id)).catch((err) => console.error(err));
     showToast('Before & After project removed', 'info');
   };
@@ -616,6 +619,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteMaterial = (id: string) => {
+    setMaterials((prev) => prev.filter((m) => m.id !== id));
     deleteDoc(doc(db, 'materials', id)).catch((err) => console.error(err));
     showToast('Material item removed', 'info');
   };
@@ -637,6 +641,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteService = (id: string) => {
+    setServices((prev) => prev.filter((s) => s.id !== id));
     deleteDoc(doc(db, 'services', id)).catch((err) => console.error(err));
     showToast('Service removed', 'info');
   };
@@ -666,6 +671,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteTestimonial = (id: string) => {
+    setTestimonials((prev) => prev.filter((t) => t.id !== id));
     deleteDoc(doc(db, 'testimonials', id)).catch((err) => console.error(err));
     showToast('Review deleted', 'info');
   };
@@ -687,6 +693,7 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteFAQ = (id: string) => {
+    setFaqs((prev) => prev.filter((f) => f.id !== id));
     deleteDoc(doc(db, 'faqs', id)).catch((err) => console.error(err));
     showToast('FAQ removed', 'info');
   };
@@ -759,18 +766,16 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetToDefaults = () => {
-    if (window.confirm('Are you sure you want to reset all site content back to initial defaults?')) {
-      setCompanyInfo(DEFAULT_COMPANY_INFO);
-      setProjects(DEFAULT_PROJECTS);
-      setServices(DEFAULT_SERVICES);
-      setTestimonials(DEFAULT_TESTIMONIALS);
-      setFaqs(DEFAULT_FAQS);
-      setEstimatorRates(DEFAULT_ESTIMATOR_RATES);
-      setLeads(DEFAULT_LEADS);
-      setAdminPin(DEFAULT_PIN);
-      localStorage.removeItem(STORAGE_KEY);
-      showToast('All data reset to defaults', 'info');
-    }
+    setCompanyInfo(DEFAULT_COMPANY_INFO);
+    setProjects(DEFAULT_PROJECTS);
+    setServices(DEFAULT_SERVICES);
+    setTestimonials(DEFAULT_TESTIMONIALS);
+    setFaqs(DEFAULT_FAQS);
+    setEstimatorRates(DEFAULT_ESTIMATOR_RATES);
+    setLeads(DEFAULT_LEADS);
+    setAdminPin(DEFAULT_PIN);
+    localStorage.removeItem(STORAGE_KEY);
+    showToast('All data reset to defaults', 'info');
   };
 
   return (

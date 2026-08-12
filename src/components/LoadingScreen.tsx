@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import prasadhLogoEmblem from '../assets/images/prasadh_logo_emblem_1786205642641.jpg';
+import prasadhLogoEmblem from '../assets/images/Prasadh_Logo1.png';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -80,12 +80,12 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="relative w-16 h-16 rounded-2xl overflow-hidden border border-amber-400/50 shadow-[0_0_30px_rgba(245,158,11,0.3)] flex items-center justify-center bg-slate-900"
+                className="relative w-20 h-20 flex items-center justify-center"
               >
                 <img
                   src={prasadhLogoEmblem}
                   alt="Prasadh Logo Emblem"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain scale-125 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]"
                   referrerPolicy="no-referrer"
                 />
               </motion.div>

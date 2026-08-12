@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Phone, Calendar, Menu, X, FileText } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
-import prasadhLogoEmblem from '../assets/images/prasadh_logo_emblem_1786205642641.jpg';
+import prasadhLogoEmblem from '../assets/images/Prasadh_Logo1.png';
 
 interface NavbarProps {
   onOpenConsultationModal: () => void;
@@ -68,16 +68,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             }}
             className="flex items-center gap-2.5 group transition-all duration-300 shrink-0 whitespace-nowrap"
           >
-            <div className={`relative flex items-center justify-center rounded-xl overflow-hidden border border-amber-400/40 shadow-lg group-hover:border-amber-300 group-hover:scale-105 group-hover:shadow-amber-500/25 transition-all duration-300 shrink-0 ${
+            <div className={`relative flex items-center justify-center shrink-0 transition-all duration-300 ${
               scrolled ? 'w-8 h-8 sm:w-9 sm:h-9' : 'w-10 h-10 sm:w-11 sm:h-11'
             }`}>
               <img
                 src={prasadhLogoEmblem}
                 alt="Prasadh Construction Emblem"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                className="w-full h-full object-contain scale-125 group-hover:scale-135 transition-transform duration-500 drop-shadow-md"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             
             <div className="flex flex-col justify-center whitespace-nowrap leading-tight">

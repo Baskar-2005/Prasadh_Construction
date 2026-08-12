@@ -47,7 +47,7 @@ import {
 } from 'lucide-react';
 import { useCMS, ServiceItemWithVisibility, ClientLead } from '../../context/CMSContext';
 import { Project, Testimonial, FAQItem, BeforeAfterProject, MaterialBrand } from '../../types';
-import prasadhLogoEmblem from '../../assets/images/prasadh_logo_emblem_1786205642641.jpg';
+import prasadhLogoEmblem from '../../assets/images/Prasadh_Logo1.png';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -83,6 +83,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   const [pinChangeInput, setPinChangeInput] = useState('');
   const [jsonImportText, setJsonImportText] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const requestConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({ title, message, onConfirm });
+  };
 
   // Handle Image Upload with Canvas compression to lightweight Base64
   const handleImageUpload = (file: File, callback: (base64Str: string) => void) => {
@@ -144,7 +154,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             <img
               src={prasadhLogoEmblem}
               alt="Prasadh Construction Logo"
-              className="w-10 h-10 rounded-xl object-cover border border-amber-400/60 shadow-xs ring-2 ring-amber-400/20"
+              className="w-10 h-10 object-contain scale-125 drop-shadow-xs"
             />
             <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" title="CMS Connected Live" />
           </div>
@@ -211,7 +221,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         {/* EXECUTIVE SIDEBAR NAVIGATION - Crisp Dark Slate */}
         <aside className="w-16 sm:w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto text-slate-300">
           <div className="p-3 border-b border-slate-800/80 hidden sm:flex items-center gap-2.5">
-            <img src={prasadhLogoEmblem} alt="Logo" className="w-7 h-7 rounded-lg object-cover" />
+            <img src={prasadhLogoEmblem} alt="Logo" className="w-7 h-7 object-contain scale-125" />
             <div>
               <p className="text-xs font-bold text-white leading-tight">Admin Console</p>
               <p className="text-[10px] text-amber-400 font-medium">Er. S. Vishnu Prasadh</p>
@@ -314,6 +324,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               cms={cms}
               globalSearch={globalSearch}
               onAddLead={() => setIsAddingLead(true)}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -324,6 +335,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               onAddProject={() => setIsAddingProject(true)}
               onEditProject={(p) => setEditingProject(p)}
               handleImageUpload={handleImageUpload}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -333,6 +345,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               globalSearch={globalSearch}
               onAddBeforeAfter={() => setIsAddingBeforeAfter(true)}
               onEditBeforeAfter={(item) => setEditingBeforeAfter(item)}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -342,6 +355,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               globalSearch={globalSearch}
               onAddMaterial={() => setIsAddingMaterial(true)}
               onEditMaterial={(mat) => setEditingMaterial(mat)}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -351,6 +365,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               globalSearch={globalSearch}
               onAddService={() => setIsAddingService(true)}
               onEditService={(s) => setEditingService(s)}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -363,6 +378,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               onAddTestimonial={() => setIsAddingTestimonial(true)}
               onEditTestimonial={(t) => setEditingTestimonial(t)}
               handleImageUpload={handleImageUpload}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -372,6 +388,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               globalSearch={globalSearch}
               onAddFAQ={() => setIsAddingFAQ(true)}
               onEditFAQ={(f) => setEditingFAQ(f)}
+              onRequestConfirm={requestConfirm}
             />
           )}
 
@@ -388,6 +405,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               cms={cms}
               jsonImportText={jsonImportText}
               setJsonImportText={setJsonImportText}
+              onRequestConfirm={requestConfirm}
             />
           )}
         </main>
@@ -528,6 +546,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           }}
         />
       )}
+
+      {/* 8. CUSTOM CONFIRMATION MODAL */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 text-slate-900 space-y-4">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">{confirmModal.title}</h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">{confirmModal.message}</p>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition-colors cursor-pointer"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -581,7 +631,7 @@ const OverviewTab: React.FC<{
           <img
             src={prasadhLogoEmblem}
             alt="Emblem"
-            className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400/40 shadow-md shrink-0"
+            className="w-14 h-14 object-contain scale-125 drop-shadow-md shrink-0"
           />
           <div>
             <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest">
@@ -860,7 +910,8 @@ const LeadsTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
   globalSearch: string;
   onAddLead: () => void;
-}> = ({ cms, globalSearch, onAddLead }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddLead, onRequestConfirm }) => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   const filteredLeads = useMemo(() => {
@@ -977,9 +1028,11 @@ const LeadsTab: React.FC<{
 
                       <button
                         onClick={() => {
-                          if (window.confirm(`Delete lead entry for ${lead.name}?`)) {
-                            cms.deleteLead(lead.id);
-                          }
+                          onRequestConfirm(
+                            'Delete Client Lead',
+                            `Are you sure you want to delete lead entry for "${lead.name}"?`,
+                            () => cms.deleteLead(lead.id)
+                          );
                         }}
                         className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 inline-flex items-center text-xs cursor-pointer"
                         title="Delete Lead"
@@ -1013,7 +1066,8 @@ const ProjectsTab: React.FC<{
   onAddProject: () => void;
   onEditProject: (p: Project) => void;
   handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
-}> = ({ cms, globalSearch, onAddProject, onEditProject }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddProject, onEditProject, onRequestConfirm }) => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   const filteredProjects = useMemo(() => {
@@ -1121,9 +1175,11 @@ const ProjectsTab: React.FC<{
 
                   <button
                     onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete project "${p.title}"?`)) {
-                        cms.deleteProject(p.id);
-                      }
+                      onRequestConfirm(
+                        'Delete Project',
+                        `Are you sure you want to delete project "${p.title}"?`,
+                        () => cms.deleteProject(p.id)
+                      );
                     }}
                     className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs cursor-pointer"
                     title="Delete Project"
@@ -1149,7 +1205,8 @@ const BeforeAfterTab: React.FC<{
   globalSearch: string;
   onAddBeforeAfter: () => void;
   onEditBeforeAfter: (item: BeforeAfterProject) => void;
-}> = ({ cms, globalSearch, onAddBeforeAfter, onEditBeforeAfter }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddBeforeAfter, onEditBeforeAfter, onRequestConfirm }) => {
   const filtered = useMemo(() => {
     let list = cms.beforeAfterProjects || [];
     if (globalSearch.trim()) {
@@ -1228,9 +1285,11 @@ const BeforeAfterTab: React.FC<{
 
               <button
                 onClick={() => {
-                  if (window.confirm(`Delete Before & After project "${ba.title}"?`)) {
-                    cms.deleteBeforeAfterProject(ba.id);
-                  }
+                  onRequestConfirm(
+                    'Delete Before & After Project',
+                    `Are you sure you want to delete "${ba.title}"?`,
+                    () => cms.deleteBeforeAfterProject(ba.id)
+                  );
                 }}
                 className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs cursor-pointer"
               >
@@ -1252,7 +1311,8 @@ const MaterialsTab: React.FC<{
   globalSearch: string;
   onAddMaterial: () => void;
   onEditMaterial: (mat: MaterialBrand) => void;
-}> = ({ cms, globalSearch, onAddMaterial, onEditMaterial }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddMaterial, onEditMaterial, onRequestConfirm }) => {
   const filtered = useMemo(() => {
     let list = cms.materials || [];
     if (globalSearch.trim()) {
@@ -1314,9 +1374,11 @@ const MaterialsTab: React.FC<{
 
                 <button
                   onClick={() => {
-                    if (window.confirm(`Delete material "${mat.brandName}"?`)) {
-                      cms.deleteMaterial(mat.id);
-                    }
+                    onRequestConfirm(
+                      'Delete Material Brand',
+                      `Are you sure you want to delete material "${mat.brandName}"?`,
+                      () => cms.deleteMaterial(mat.id)
+                    );
                   }}
                   className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 text-xs cursor-pointer"
                 >
@@ -1339,7 +1401,8 @@ const ServicesTab: React.FC<{
   globalSearch: string;
   onAddService: () => void;
   onEditService: (s: ServiceItemWithVisibility) => void;
-}> = ({ cms, globalSearch, onAddService, onEditService }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddService, onEditService, onRequestConfirm }) => {
   const filteredServices = useMemo(() => {
     let list = cms.services;
     if (globalSearch.trim()) {
@@ -1412,9 +1475,11 @@ const ServicesTab: React.FC<{
 
                   <button
                     onClick={() => {
-                      if (window.confirm(`Delete service "${serv.title}"?`)) {
-                        cms.deleteService(serv.id);
-                      }
+                      onRequestConfirm(
+                        'Delete Service',
+                        `Are you sure you want to delete service "${serv.title}"?`,
+                        () => cms.deleteService(serv.id)
+                      );
                     }}
                     className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 cursor-pointer"
                   >
@@ -1585,7 +1650,8 @@ const TestimonialsTab: React.FC<{
   onAddTestimonial: () => void;
   onEditTestimonial: (t: Testimonial) => void;
   handleImageUpload: (file: File, callback: (base64Str: string) => void) => void;
-}> = ({ cms, globalSearch, onAddTestimonial, onEditTestimonial }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddTestimonial, onEditTestimonial, onRequestConfirm }) => {
   const filtered = useMemo(() => {
     let list = cms.testimonials;
     if (globalSearch.trim()) {
@@ -1649,11 +1715,14 @@ const TestimonialsTab: React.FC<{
                 </button>
                 <button
                   onClick={() => {
-                    if (window.confirm(`Delete review from ${test.clientName}?`)) {
-                      cms.deleteTestimonial(test.id);
-                    }
+                    onRequestConfirm(
+                      'Delete Client Review',
+                      `Are you sure you want to delete review from "${test.clientName}"?`,
+                      () => cms.deleteTestimonial(test.id)
+                    );
                   }}
                   className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 cursor-pointer"
+                  title="Delete Review"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -1674,7 +1743,8 @@ const FAQsTab: React.FC<{
   globalSearch: string;
   onAddFAQ: () => void;
   onEditFAQ: (f: FAQItem) => void;
-}> = ({ cms, globalSearch, onAddFAQ, onEditFAQ }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, globalSearch, onAddFAQ, onEditFAQ, onRequestConfirm }) => {
   const filtered = useMemo(() => {
     let list = cms.faqs;
     if (globalSearch.trim()) {
@@ -1721,9 +1791,11 @@ const FAQsTab: React.FC<{
                 </button>
                 <button
                   onClick={() => {
-                    if (window.confirm('Delete this FAQ?')) {
-                      cms.deleteFAQ(faq.id);
-                    }
+                    onRequestConfirm(
+                      'Delete FAQ',
+                      'Are you sure you want to delete this FAQ question?',
+                      () => cms.deleteFAQ(faq.id)
+                    );
                   }}
                   className="p-1 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 cursor-pointer"
                 >
@@ -1946,7 +2018,8 @@ const BackupTab: React.FC<{
   cms: ReturnType<typeof useCMS>;
   jsonImportText: string;
   setJsonImportText: (v: string) => void;
-}> = ({ cms, jsonImportText, setJsonImportText }) => {
+  onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
+}> = ({ cms, jsonImportText, setJsonImportText, onRequestConfirm }) => {
   const handleImport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!jsonImportText.trim()) return;
@@ -2013,7 +2086,13 @@ const BackupTab: React.FC<{
           </div>
 
           <button
-            onClick={() => cms.resetToDefaults()}
+            onClick={() => {
+              onRequestConfirm(
+                'Reset Site Content to Defaults',
+                'Are you sure you want to reset all site content back to initial default values? All live edits will be lost.',
+                () => cms.resetToDefaults()
+              );
+            }}
             className="w-full py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
           >
             <RotateCcw className="w-4 h-4" />

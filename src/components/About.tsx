@@ -136,7 +136,7 @@ export const About: React.FC = () => {
 
             <div className="lg:col-span-6 space-y-6">
               <h3 className="text-2xl sm:text-3xl font-bold text-[#0F172A] font-display">
-                Built On Structural Integrity, Transparency & Local Trust.
+                Built On Integrity, Transparency & Local Trust.
               </h3>
               
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">

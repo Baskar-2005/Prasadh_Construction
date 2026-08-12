@@ -1,7 +1,7 @@
 import React from 'react';
 import { Phone, Mail, MapPin, ArrowUp, Heart, Star, Lock, LayoutDashboard } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
-import prasadhLogoEmblem from '../assets/images/prasadh_logo_emblem_1786205642641.jpg';
+import prasadhLogoEmblem from '../assets/images/Prasadh_Logo1.png';
 import { useCMS } from '../context/CMSContext';
 
 export const Footer: React.FC = () => {
@@ -24,11 +24,11 @@ export const Footer: React.FC = () => {
           {/* Col 1: Brand & Bio */}
           <div className="lg:col-span-4 space-y-4">
             <a href="#home" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-xl overflow-hidden border border-amber-400/40 shadow-lg group-hover:border-amber-300 transition-all shrink-0">
+              <div className="w-11 h-11 flex items-center justify-center shrink-0">
                 <img
                   src={prasadhLogoEmblem}
                   alt="Prasadh Construction Emblem"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-contain scale-125 group-hover:scale-135 transition-transform duration-500 drop-shadow-md"
                   referrerPolicy="no-referrer"
                 />
               </div>
