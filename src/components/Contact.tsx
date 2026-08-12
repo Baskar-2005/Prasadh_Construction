@@ -21,7 +21,7 @@ interface ContactProps {
 }
 
 export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
-  const { companyInfo } = useCMS();
+  const { companyInfo, addLead } = useCMS();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -73,6 +73,18 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
+
+    addLead({
+      name,
+      phone,
+      email: email || undefined,
+      location: mapLocationUrl || 'Virudhachalam Area',
+      serviceRequested: projectType,
+      estimatedBudget: budget,
+      status: 'New',
+      date: new Date().toISOString().split('T')[0],
+      notes: message ? `Notes: ${message}` : 'Submitted via Web Inquiry Form'
+    });
 
     setSubmitted(true);
   };

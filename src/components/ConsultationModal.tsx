@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, Clock, User, Phone, CheckCircle2, Send, Sparkles } from 'lucide-react';
 import { COMPANY_INFO } from '../data/mockData';
+import { useCMS } from '../context/CMSContext';
 
 interface ConsultationModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
   onClose,
   initialTopic
 }) => {
+  const { addLead } = useCMS();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [date, setDate] = useState('');
@@ -32,6 +34,16 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
   const handleBooking = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !phone) return;
+
+    addLead({
+      name,
+      phone,
+      location: 'Virudhachalam / Site Visit',
+      serviceRequested: consultationType || 'Free Structural Consultation',
+      status: 'New',
+      date: date || new Date().toISOString().split('T')[0],
+      notes: `Consultation Slot: ${date || 'Earliest Available'} (${timeSlot})`
+    });
 
     setConfirmed(true);
   };

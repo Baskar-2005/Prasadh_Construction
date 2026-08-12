@@ -913,9 +913,19 @@ const LeadsTab: React.FC<{
   onRequestConfirm: (title: string, message: string, onConfirm: () => void) => void;
 }> = ({ cms, globalSearch, onAddLead, onRequestConfirm }) => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedLead, setSelectedLead] = useState<ClientLead | null>(null);
+  const [editingNotes, setEditingNotes] = useState<string>('');
+
+  const leadsList = cms.leads || [];
+
+  // Summary Metrics
+  const totalCount = leadsList.length;
+  const newCount = leadsList.filter((l) => l.status === 'New').length;
+  const siteVisitCount = leadsList.filter((l) => l.status === 'Site Visited').length;
+  const convertedCount = leadsList.filter((l) => l.status === 'Converted').length;
 
   const filteredLeads = useMemo(() => {
-    let list = cms.leads || [];
+    let list = leadsList;
     if (filterStatus !== 'all') {
       list = list.filter((l) => l.status === filterStatus);
     }
@@ -925,22 +935,43 @@ const LeadsTab: React.FC<{
         (l) =>
           l.name.toLowerCase().includes(q) ||
           l.phone.includes(q) ||
+          (l.email && l.email.toLowerCase().includes(q)) ||
           l.location.toLowerCase().includes(q) ||
           l.serviceRequested.toLowerCase().includes(q)
       );
     }
     return list;
-  }, [cms.leads, filterStatus, globalSearch]);
+  }, [leadsList, filterStatus, globalSearch]);
+
+  const cleanPhoneForWhatsApp = (phoneStr: string) => {
+    let cleaned = phoneStr.replace(/[^0-9]/g, '');
+    if (cleaned.length === 10) {
+      cleaned = '91' + cleaned;
+    }
+    return cleaned;
+  };
+
+  const handleOpenLeadDetail = (lead: ClientLead) => {
+    setSelectedLead(lead);
+    setEditingNotes(lead.notes || '');
+  };
+
+  const handleSaveNotes = () => {
+    if (!selectedLead) return;
+    cms.updateLeadStatus(selectedLead.id, selectedLead.status, editingNotes);
+    setSelectedLead({ ...selectedLead, notes: editingNotes });
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* HEADER BAR */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div>
           <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <Users className="w-5 h-5 text-amber-500" />
             Client Consultations & Leads Management
           </h2>
-          <p className="text-xs text-slate-500">Track and follow up on client inquiries, site visit requests, and project BOQs</p>
+          <p className="text-xs text-slate-500">Track inquiries submitted from website forms, site visits, and project consultations</p>
         </div>
 
         <button
@@ -952,9 +983,40 @@ const LeadsTab: React.FC<{
         </button>
       </div>
 
+      {/* METRICS CARDS */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Enquiries</p>
+          <p className="text-2xl font-black text-slate-900 font-display mt-1">{totalCount}</p>
+        </div>
+
+        <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/80 shadow-2xs relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">New Inquiries</p>
+            {newCount > 0 && (
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+            )}
+          </div>
+          <p className="text-2xl font-black text-amber-950 font-display mt-1">{newCount}</p>
+        </div>
+
+        <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-200/80 shadow-2xs">
+          <p className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">Site Visits</p>
+          <p className="text-2xl font-black text-blue-950 font-display mt-1">{siteVisitCount}</p>
+        </div>
+
+        <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 shadow-2xs">
+          <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Converted</p>
+          <p className="text-2xl font-black text-emerald-950 font-display mt-1">{convertedCount}</p>
+        </div>
+      </div>
+
       {/* FILTER TABS */}
       <div className="flex flex-wrap items-center gap-2">
-        {['all', 'New', 'Contacted', 'Site Visited', 'Converted', 'Closed'].map((st) => (
+        {['all', 'New', 'Contacted', 'Site Visited', 'Estimate Sent', 'Converted', 'Closed'].map((st) => (
           <button
             key={st}
             onClick={() => setFilterStatus(st)}
@@ -964,19 +1026,19 @@ const LeadsTab: React.FC<{
                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
             }`}
           >
-            {st === 'all' ? 'All Inquiries' : st}
+            {st === 'all' ? `All (${totalCount})` : `${st} (${leadsList.filter((l) => l.status === st).length})`}
           </button>
         ))}
       </div>
 
-      {/* LEADS LIST / TABLE */}
+      {/* LEADS TABLE */}
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
         {filteredLeads.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                  <th className="py-3 px-4">Client Name & Phone</th>
+                  <th className="py-3 px-4">Client Contact</th>
                   <th className="py-3 px-4">Requested Service</th>
                   <th className="py-3 px-4">Location</th>
                   <th className="py-3 px-4">Est. Budget</th>
@@ -986,62 +1048,114 @@ const LeadsTab: React.FC<{
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
-                {filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
-                      {lead.name}
-                      <p className="text-[11px] text-blue-600 font-mono font-normal">
-                        <a href={`tel:${lead.phone}`}>{lead.phone}</a>
-                      </p>
-                    </td>
-                    <td className="py-3.5 px-4 font-medium max-w-xs">{lead.serviceRequested}</td>
-                    <td className="py-3.5 px-4 text-slate-600">{lead.location}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">{lead.estimatedBudget || 'N/A'}</td>
-                    <td className="py-3.5 px-4 text-slate-500 text-[11px]">{lead.date}</td>
-                    <td className="py-3.5 px-4">
-                      <select
-                        value={lead.status}
-                        onChange={(e) => cms.updateLeadStatus(lead.id, e.target.value as any)}
-                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-hidden focus:border-amber-500 cursor-pointer"
-                      >
-                        <option value="New">New</option>
-                        <option value="Contacted">Contacted</option>
-                        <option value="Site Visited">Site Visited</option>
-                        <option value="Estimate Sent">Estimate Sent</option>
-                        <option value="Converted">Converted</option>
-                        <option value="Closed">Closed</option>
-                      </select>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
-                      <a
-                        href={`https://wa.me/${cms.companyInfo.whatsapp}?text=${encodeURIComponent(
-                          `Hello ${lead.name}, Er. S. Vishnu Prasadh here from Prasadh Construction. Regarding your request for ${lead.serviceRequested}...`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center text-xs font-bold gap-1 cursor-pointer"
-                        title="Chat on WhatsApp"
-                      >
-                        <Send className="w-3.5 h-3.5" />
-                        <span className="hidden md:inline">WhatsApp</span>
-                      </a>
+                {filteredLeads.map((lead) => {
+                  const cleanPhone = cleanPhoneForWhatsApp(lead.phone);
+                  const isNew = lead.status === 'New';
 
-                      <button
-                        onClick={() => {
-                          onRequestConfirm(
-                            'Delete Client Lead',
-                            `Are you sure you want to delete lead entry for "${lead.name}"?`,
-                            () => cms.deleteLead(lead.id)
-                          );
-                        }}
-                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 inline-flex items-center text-xs cursor-pointer"
-                        title="Delete Lead"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                  return (
+                    <tr
+                      key={lead.id}
+                      className={`hover:bg-slate-50/80 transition-colors ${
+                        isNew ? 'bg-amber-50/30 font-medium' : ''
+                      }`}
+                    >
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          {isNew && (
+                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="New Lead" />
+                          )}
+                          <div>
+                            <button
+                              onClick={() => handleOpenLeadDetail(lead)}
+                              className="font-bold text-slate-900 hover:text-[#1E3A8A] text-left cursor-pointer"
+                            >
+                              {lead.name}
+                            </button>
+                            <p className="text-[11px] text-blue-600 font-mono">
+                              <a href={`tel:${lead.phone}`} className="hover:underline">
+                                {lead.phone}
+                              </a>
+                            </p>
+                            {lead.email && (
+                              <p className="text-[10px] text-slate-400 truncate max-w-[160px]">{lead.email}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 font-medium max-w-xs">{lead.serviceRequested}</td>
+                      <td className="py-3.5 px-4 text-slate-600 max-w-[150px] truncate">{lead.location}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-900">{lead.estimatedBudget || 'N/A'}</td>
+                      <td className="py-3.5 px-4 text-slate-500 text-[11px]">{lead.date}</td>
+                      <td className="py-3.5 px-4">
+                        <select
+                          value={lead.status}
+                          onChange={(e) => cms.updateLeadStatus(lead.id, e.target.value as any)}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border focus:outline-hidden cursor-pointer ${
+                            lead.status === 'New'
+                              ? 'bg-amber-100 text-amber-900 border-amber-300'
+                              : lead.status === 'Converted'
+                              ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                              : lead.status === 'Closed'
+                              ? 'bg-slate-100 text-slate-600 border-slate-300'
+                              : 'bg-blue-50 text-blue-900 border-blue-200'
+                          }`}
+                        >
+                          <option value="New">New</option>
+                          <option value="Contacted">Contacted</option>
+                          <option value="Site Visited">Site Visited</option>
+                          <option value="Estimate Sent">Estimate Sent</option>
+                          <option value="Converted">Converted</option>
+                          <option value="Closed">Closed</option>
+                        </select>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
+                        <button
+                          onClick={() => handleOpenLeadDetail(lead)}
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 inline-flex items-center text-xs font-bold gap-1 cursor-pointer"
+                          title="View Lead Details & Notes"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden md:inline">Details</span>
+                        </button>
+
+                        <a
+                          href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                            `Hello ${lead.name}, Er. S. Vishnu Prasadh here from Prasadh Construction Virudhachalam. Thank you for your inquiry regarding "${lead.serviceRequested}". We would love to discuss your site specifications and arrange a free visit!`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 inline-flex items-center text-xs font-bold gap-1 cursor-pointer"
+                          title={`Chat with ${lead.name} on WhatsApp`}
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span className="hidden md:inline">WhatsApp</span>
+                        </a>
+
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 inline-flex items-center text-xs font-bold cursor-pointer"
+                          title={`Call ${lead.name}`}
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                        </a>
+
+                        <button
+                          onClick={() => {
+                            onRequestConfirm(
+                              'Delete Client Lead',
+                              `Are you sure you want to delete lead entry for "${lead.name}"?`,
+                              () => cms.deleteLead(lead.id)
+                            );
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 inline-flex items-center text-xs cursor-pointer"
+                          title="Delete Lead"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1049,10 +1163,173 @@ const LeadsTab: React.FC<{
           <div className="p-8 text-center text-slate-400">
             <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-600">No client leads matching criteria.</p>
-            <p className="text-xs text-slate-400 mt-1">Click "Log New Lead" to record phone calls or site visitors.</p>
+            <p className="text-xs text-slate-400 mt-1">When users submit contact forms on the website, they will appear here instantly.</p>
           </div>
         )}
       </div>
+
+      {/* LEAD DETAIL & NOTES MODAL */}
+      {selectedLead && (
+        <div className="fixed inset-0 z-[180] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 text-slate-900 border border-slate-200 shadow-2xl my-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
+                  Client Enquiry Details
+                </span>
+                <h3 className="text-lg font-black text-slate-900 font-display mt-1">
+                  {selectedLead.name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedLead(null)}
+                className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+              <div>
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Phone Number</p>
+                <p className="font-bold text-slate-900 mt-0.5 font-mono">
+                  <a href={`tel:${selectedLead.phone}`} className="hover:underline text-blue-600">
+                    {selectedLead.phone}
+                  </a>
+                </p>
+              </div>
+
+              {selectedLead.email && (
+                <div>
+                  <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Email Address</p>
+                  <p className="font-bold text-slate-900 mt-0.5 truncate">
+                    <a href={`mailto:${selectedLead.email}`} className="hover:underline text-blue-600">
+                      {selectedLead.email}
+                    </a>
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Requested Service</p>
+                <p className="font-bold text-slate-900 mt-0.5">{selectedLead.serviceRequested}</p>
+              </div>
+
+              <div>
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Estimated Budget</p>
+                <p className="font-bold text-slate-900 mt-0.5">{selectedLead.estimatedBudget || 'Not Specified'}</p>
+              </div>
+
+              <div className="col-span-2">
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Site Address / GPS Location</p>
+                <p className="font-semibold text-slate-800 mt-0.5">
+                  {selectedLead.location.startsWith('http') ? (
+                    <a
+                      href={selectedLead.location}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 underline inline-flex items-center gap-1 font-bold"
+                    >
+                      <MapPin className="w-3.5 h-3.5" /> View Live GPS Location Link
+                    </a>
+                  ) : (
+                    selectedLead.location
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Inquiry Date</p>
+                <p className="font-bold text-slate-900 mt-0.5">{selectedLead.date}</p>
+              </div>
+
+              <div>
+                <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Current Status</p>
+                <select
+                  value={selectedLead.status}
+                  onChange={(e) => {
+                    const newStatus = e.target.value as any;
+                    cms.updateLeadStatus(selectedLead.id, newStatus, editingNotes);
+                    setSelectedLead({ ...selectedLead, status: newStatus });
+                  }}
+                  className="mt-1 px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-900 cursor-pointer"
+                >
+                  <option value="New">New</option>
+                  <option value="Contacted">Contacted</option>
+                  <option value="Site Visited">Site Visited</option>
+                  <option value="Estimate Sent">Estimate Sent</option>
+                  <option value="Converted">Converted</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+            </div>
+
+            {/* EDITABLE NOTES / COMMENTS */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>Inquiry Notes & Internal Admin Comments</span>
+                <span className="text-[10px] text-slate-400 font-normal">Stored in Firestore</span>
+              </label>
+              <textarea
+                value={editingNotes}
+                onChange={(e) => setEditingNotes(e.target.value)}
+                rows={4}
+                placeholder="Type follow-up notes, site visit feedback, or BOQ discussion status..."
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-hidden"
+              />
+              <button
+                onClick={handleSaveNotes}
+                className="px-4 py-2 bg-[#0F172A] hover:bg-[#1E3A8A] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Notes</span>
+              </button>
+            </div>
+
+            {/* ACTION FOOTER */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://wa.me/${cleanPhoneForWhatsApp(selectedLead.phone)}?text=${encodeURIComponent(
+                    `Hello ${selectedLead.name}, Er. S. Vishnu Prasadh here from Prasadh Construction Virudhachalam. Regarding your request for "${selectedLead.serviceRequested}"...`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Reply on WhatsApp</span>
+                </a>
+
+                <a
+                  href={`tel:${selectedLead.phone}`}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call {selectedLead.phone}</span>
+                </a>
+              </div>
+
+              <button
+                onClick={() => {
+                  onRequestConfirm(
+                    'Delete Client Lead',
+                    `Are you sure you want to delete lead entry for "${selectedLead.name}"?`,
+                    () => {
+                      cms.deleteLead(selectedLead.id);
+                      setSelectedLead(null);
+                    }
+                  );
+                }}
+                className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl cursor-pointer"
+                title="Delete Lead"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

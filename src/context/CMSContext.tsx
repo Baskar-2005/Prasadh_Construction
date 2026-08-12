@@ -79,6 +79,7 @@ export interface ClientLead {
   id: string;
   name: string;
   phone: string;
+  email?: string;
   location: string;
   serviceRequested: string;
   estimatedBudget?: string;
@@ -539,16 +540,18 @@ export const CMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addLead = (leadData: Omit<ClientLead, 'id'>) => {
     const id = `lead-${Date.now()}`;
     const newLead: ClientLead = { ...leadData, id };
+    setLeads((prev) => [newLead, ...prev.filter((l) => l.id !== id)]);
     setDoc(doc(db, 'leads', id), newLead).catch((err) => console.error(err));
-    showToast(`New client lead logged for ${leadData.name}`);
+    showToast(`New client enquiry logged for ${leadData.name}`);
   };
 
   const updateLeadStatus = (id: string, status: ClientLead['status'], notes?: string) => {
     const existing = leads.find((l) => l.id === id);
     if (!existing) return;
     const updated = { ...existing, status, ...(notes !== undefined ? { notes } : {}) };
+    setLeads((prev) => prev.map((l) => (l.id === id ? updated : l)));
     setDoc(doc(db, 'leads', id), updated).catch((err) => console.error(err));
-    showToast(`Lead status updated to "${status}"`);
+    showToast(`Enquiry status updated to "${status}"`);
   };
 
   const deleteLead = (id: string) => {
