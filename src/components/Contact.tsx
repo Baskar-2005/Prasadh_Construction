@@ -147,7 +147,10 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Main Office</h4>
                       <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-0.5 leading-relaxed">
-                        HO. 160/A3, ceramic Aladi Road Virudhachalam 606001
+                        HO. 160/A3, Ceramic Aladi Road, Virudhachalam - 606001
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        Plus Code: G8HH+J38, Ceramic Aladi Rd, Virudhachalam
                       </p>
                     </div>
 
@@ -246,7 +249,7 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
                   Main Office Location
                 </span>
                 <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent('160/A3, Ceramic Aladi Road, Virudhachalam 606001')}`}
+                  href="https://www.google.com/maps/place/PRASADH+Construction/@11.5290372,79.3276891,17z/data=!4m15!1m8!3m7!1s0x3bab4a69b287229d:0x704b30099a0a4bb4!2sCeramic+Aladi+Rd,+Virudhachalam,+Tamil+Nadu+606001!3b1!8m2!3d11.5295078!4d79.3251301!16s%2Fg%2F11cjg9g2t3!3m5!1s0x3bab4b000f4f7a39:0xbcb58abeca4febb2!8m2!3d11.5290372!4d79.3276891!16s%2Fg%2F11zdjpqfpd"
                   target="_blank"
                   rel="noreferrer"
                   className="text-[11px] text-amber-300 hover:text-white flex items-center gap-1 font-semibold transition-colors"
@@ -256,10 +259,10 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
               </div>
 
               <div className="relative h-48 rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 mb-3 shadow-inner">
-                {/* Embed Styled Google Maps Iframe for 160/A3 Ceramic Aladi Road Virudhachalam */}
+                {/* Embed Styled Google Maps Iframe for PRASADH Construction */}
                 <iframe
-                  title="Prasadh Construction Virudhachalam Location"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent('160/A3, Ceramic Aladi Road, Virudhachalam 606001')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                  title="PRASADH Construction Virudhachalam Location"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent('PRASADH Construction, Ceramic Aladi Rd, Virudhachalam, Tamil Nadu 606001')}&t=&z=17&ie=UTF8&iwloc=B&output=embed`}
                   className="w-full h-full border-0 transition-all duration-500 hover:opacity-100"
                   loading="lazy"
                 />
@@ -267,9 +270,14 @@ export const Contact: React.FC<ContactProps> = ({ initialServiceTitle }) => {
 
               <div className="flex items-start gap-2 text-xs text-slate-300">
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <p className="font-medium leading-relaxed">
-                  {'HO. 160/A3, Ceramic Aladi Road, Virudhachalam - 606001'}
-                </p>
+                <div>
+                  <p className="font-bold text-white leading-relaxed">
+                    PRASADH Construction
+                  </p>
+                  <p className="text-slate-300 leading-relaxed">
+                    Ceramic Aladi Rd, Virudhachalam, Tamil Nadu 606001 (Plus Code: G8HH+J38)
+                  </p>
+                </div>
               </div>
             </div>
 

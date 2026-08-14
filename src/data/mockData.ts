@@ -16,7 +16,7 @@ export const COMPANY_INFO = {
   name: "Prasadh Construction Company & Consultant",
   founder: "Er. S.Vishnu Prasadh",
   tagline: "Building Strong Foundations For Better Living.",
-  address: "HO. 160/A3, Ceramic Aladi Road, Virudhachalam - 606001",
+  address: "HO. 160/A3, Ceramic Aladi Rd, Virudhachalam, Tamil Nadu 606001 (G8HH+J38)",
   branchAddress: "3/298, Valliamman Kovil Street, Mundiyampakkam, Villupuram - 605601",
   phone: "+91 8056658861",
   secondaryPhone: "+91 8110818861",

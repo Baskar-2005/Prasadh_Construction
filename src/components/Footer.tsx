@@ -98,7 +98,15 @@ export const Footer: React.FC = () => {
               Office Locations & Contact
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              📍 <strong>Main:</strong> {companyInfo.address}
+              📍 <strong>Main:</strong>{' '}
+              <a
+                href="https://www.google.com/maps/place/PRASADH+Construction/@11.5290372,79.3276891,17z/data=!4m15!1m8!3m7!1s0x3bab4a69b287229d:0x704b30099a0a4bb4!2sCeramic+Aladi+Rd,+Virudhachalam,+Tamil+Nadu+606001!3b1!8m2!3d11.5295078!4d79.3251301!16s%2Fg%2F11cjg9g2t3!3m5!1s0x3bab4b000f4f7a39:0xbcb58abeca4febb2!8m2!3d11.5290372!4d79.3276891!16s%2Fg%2F11zdjpqfpd"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-amber-300 transition-colors underline decoration-slate-600 underline-offset-2"
+              >
+                {companyInfo.address}
+              </a>
             </p>
             {companyInfo.branchAddress && (
               <p className="text-xs text-slate-300 leading-relaxed">
